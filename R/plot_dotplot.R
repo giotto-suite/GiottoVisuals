@@ -113,7 +113,7 @@ dotPlot <- function(gobject,
     view = NULL,
     space = NULL) {
     checkmate::assert_character(cluster_column, len = 1L)
-    checkmate::assert_class(gobject, "giotto")
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
     if (!is.null(gradient_limits)) {

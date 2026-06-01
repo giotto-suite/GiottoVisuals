@@ -34,6 +34,41 @@ NULL
 }
 
 
+# Class guard for plot functions: single-sample `giotto` only in v1.
+#
+# Why this helper exists: plot functions currently assert
+# `inherits(gobject, "giotto")` via checkmate, which produces an
+# unhelpful "Must inherit from class 'giotto'" error when the caller
+# passes a `giottoMulti` (a sibling class — both extend `gAny` but
+# `giottoMulti` does NOT inherit from `giotto`). Multi-sample plot
+# dispatch is a planned polish item; until it lands, surface a clear
+# error that points to the documented workaround.
+#
+# Picks the calling function's name out of the call stack so the same
+# helper can be dropped in wherever `checkmate::assert_class(gobject,
+# "giotto")` lives without per-call boilerplate.
+#
+#' @keywords internal
+#' @noRd
+.gg_assert_giotto_single <- function(gobject) {
+    if (inherits(gobject, "giottoMulti")) {
+        caller <- tryCatch(
+            as.character(sys.call(sys.parent())[[1L]]),
+            error = function(e) "<plot fn>"
+        )
+        fn_name <- caller[[length(caller)]]  # strip pkg:: prefix if any
+        stop(sprintf(paste(
+            "[%s] giottoMulti is not yet supported by this plot function.",
+            "Materialize and plot each child individually:",
+            "    out <- GiottoClass::materialize(mg, view, space)",
+            "    %s(out@objects[[<sample_name>]], ...)",
+            sep = "\n"
+        ), fn_name, fn_name), call. = FALSE)
+    }
+    checkmate::assert_class(gobject, "giotto")
+}
+
+
 # coord fixed ratio ####
 
 .aspect_ratio <- function(pl, coord_fix_ratio = NULL) {
