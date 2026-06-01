@@ -165,16 +165,12 @@ spatInSituPlotPoints <- function(
     # currently not intended for more than one thing to plot
     checkmate::assert_character(polygon_fill, null.ok = TRUE, len = 1L)
     handle_errors({
-    # Pre-narrow once via materialize for the slots this plot reads
-    # (polygons, points, locations, enrichment, expression-for-fill,
-    # metadata, images). One resolver pass; downstream helpers see a
-    # narrowed gobject and don't re-resolve view/space per layer.
-    if (!is.null(view) || !is.null(space)) {
-        gobject <- GiottoClass::materialize(gobject, view, space = space,
-            slots = c("cell_metadata", "spatial_info", "spatial_locs",
-                "spatial_enrichment", "feat_info", "feat_metadata",
-                "expression", "images"))
-    }
+    # Pre-narrow once for the slots this plot reads (polygons, points,
+    # locations, enrichment, expression-for-fill, metadata, images).
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_info", "spatial_locs",
+            "spatial_enrichment", "feat_info", "feat_metadata",
+            "expression", "images"))
     # set polygon_feat_type
     avail_poly_names <- list_spatial_info_names(gobject = gobject)
     if (polygon_feat_type == "cell" &&
@@ -772,7 +768,12 @@ spatInSituPlotHex <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "spatInSituPlotHex") {
+    default_save_name = "spatInSituPlotHex",
+    view = NULL,
+    space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_info", "spatial_locs",
+            "feat_info", "feat_metadata", "images"))
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(
@@ -1040,7 +1041,12 @@ spatInSituPlotDensity <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "spatInSituPlotDensity") {
+    default_save_name = "spatInSituPlotDensity",
+    view = NULL,
+    space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("spatial_info", "spatial_locs",
+            "feat_info", "feat_metadata", "images"))
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(

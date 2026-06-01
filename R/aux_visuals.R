@@ -2,6 +2,38 @@
 NULL
 
 
+# view / space pre-narrow ####
+
+# Thin wrapper around `GiottoClass::materialize()` for plot functions.
+#
+# Why this helper exists (don't inline it back):
+# `GiottoClass::materialize()` dispatches on `signature(giotto,
+# giottoView)` / `(giotto, character)` / multi variants — there is no
+# method for `view = NULL`. Calling `materialize(g, NULL, NULL)` would
+# error with "no applicable method". Plot functions need to accept
+# `view = NULL` / `space = NULL` as the default (so callers without a
+# view see normal behavior), so each call site would otherwise need an
+# inline `if (!is.null(view) || !is.null(space)) ...` guard. This
+# helper folds that guard into one place.
+#
+# `slots` is a character vector of the slot names this plot reads —
+# see [GiottoClass::materialize()] for the canonical set. The resolver
+# runs ONCE for the listed slots; the predicate / crop is evaluated
+# once regardless of how many combine* / getter calls the plot
+# internals make.
+#
+# Backend-agnostic by design: `materialize()` auto-selects
+# `dataTableCoordinator` for in-mem gobjects and `parquetCoordinator`
+# for `gsource`-backed gobjects via `.default_view_coordinator`.
+#
+#' @keywords internal
+#' @noRd
+.gg_materialize <- function(gobject, view, space, slots) {
+    if (is.null(view) && is.null(space)) return(gobject)
+    GiottoClass::materialize(gobject, view, space = space, slots = slots)
+}
+
+
 # coord fixed ratio ####
 
 .aspect_ratio <- function(pl, coord_fix_ratio = NULL) {

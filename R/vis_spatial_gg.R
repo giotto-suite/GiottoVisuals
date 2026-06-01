@@ -577,15 +577,11 @@ spatPlot2D <- function(
         space = NULL) {
     checkmate::assert_class(gobject, "giotto")
 
-    # Pre-narrow once via materialize for the slots this plot reads.
-    # Downstream helpers see a narrowed gobject and don't re-resolve
-    # view/space per call.
-    if (!is.null(view) || !is.null(space)) {
-        gobject <- GiottoClass::materialize(gobject, view, space = space,
-            slots = c("cell_metadata", "spatial_locs",
-                "spatial_enrichment", "expression", "dimension_reduction",
-                "images"))
-    }
+    # Pre-narrow once for the slots this plot reads.
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
 
     # deprecation message
     if (!is.null(largeImage_name)) {
@@ -935,7 +931,12 @@ spatDeconvPlot <- function(
         save_plot = NULL,
         save_param = list(),
         theme_param = list(),
-        default_save_name = "spatDeconvPlot") {
+        default_save_name = "spatDeconvPlot",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # check for installed packages
     package_check(pkg_name = "scatterpie", repository = "CRAN")
 
@@ -1541,9 +1542,15 @@ dimPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimPlot2D") {
+        default_save_name = "dimPlot2D",
+        view = NULL,
+        space = NULL) {
     # arg_list <- c(as.list(environment())) # get all args as list
     checkmate::assert_class(gobject, "giotto")
+
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
 
     handle_errors({
         ## check group_by
@@ -2131,7 +2138,13 @@ spatDimPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimPlot2D") {
+        default_save_name = "spatDimPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -2449,7 +2462,12 @@ spatFeatPlot2D_single <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatFeatPlot2D_single") {
+        default_save_name = "spatFeatPlot2D_single",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # data.table variables
     cell_ID <- NULL
 
@@ -3031,7 +3049,12 @@ spatFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatFeatPlot2D") {
+        default_save_name = "spatFeatPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -3535,7 +3558,12 @@ dimFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimFeatPlot2D") {
+        default_save_name = "dimFeatPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
 
     handle_errors({
         # print, return and save parameters
@@ -3899,7 +3927,13 @@ spatDimFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimFeatPlot2D") {
+        default_save_name = "spatDimFeatPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )
@@ -4137,7 +4171,12 @@ spatCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatCellPlot2D") {
+        default_save_name = "spatCellPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4355,7 +4394,12 @@ dimCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimCellPlot2D") {
+        default_save_name = "dimCellPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4633,7 +4677,13 @@ spatDimCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimCellPlot2D") {
+        default_save_name = "spatDimCellPlot2D",
+        view = NULL,
+        space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )
