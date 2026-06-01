@@ -43,6 +43,13 @@
 #' polygons (default) or points.
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
 #' @param verbose be verbose
+#' @param view,space optional [GiottoClass::giottoView-class] /
+#' [GiottoClass::giottoSpace-class] or the name of one slotted on
+#' `gobject`. When supplied, `gobject` is pre-narrowed via
+#' [GiottoClass::materialize()] before any sub-layer fetches its data.
+#' One resolver pass is shared across the polygon / point / image
+#' helpers. Backend-agnostic: in-mem and on-disk gobjects take the
+#' same code path via the registered view coordinator.
 #' @param ... additional params to pass to [spatValues()]
 #' @returns ggplot
 #' @examples
@@ -152,10 +159,22 @@ spatInSituPlotPoints <- function(
         save_param = list(),
         default_save_name = "spatInSituPlotPoints",
         verbose = TRUE,
+        view = NULL,
+        space = NULL,
         ...) {
     # currently not intended for more than one thing to plot
     checkmate::assert_character(polygon_fill, null.ok = TRUE, len = 1L)
     handle_errors({
+    # Pre-narrow once via materialize for the slots this plot reads
+    # (polygons, points, locations, enrichment, expression-for-fill,
+    # metadata, images). One resolver pass; downstream helpers see a
+    # narrowed gobject and don't re-resolve view/space per layer.
+    if (!is.null(view) || !is.null(space)) {
+        gobject <- GiottoClass::materialize(gobject, view, space = space,
+            slots = c("cell_metadata", "spatial_info", "spatial_locs",
+                "spatial_enrichment", "feat_info", "feat_metadata",
+                "expression", "images"))
+    }
     # set polygon_feat_type
     avail_poly_names <- list_spatial_info_names(gobject = gobject)
     if (polygon_feat_type == "cell" &&

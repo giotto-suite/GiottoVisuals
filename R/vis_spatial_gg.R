@@ -495,6 +495,12 @@
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @param view,space optional [GiottoClass::giottoView-class] /
+#' [GiottoClass::giottoSpace-class] or the name of one slotted on
+#' `gobject`. When supplied, `gobject` is pre-narrowed via
+#' [GiottoClass::materialize()] before data is fetched. One resolver
+#' pass shared across all slot reads; same code path for in-mem and
+#' on-disk gobjects.
 #' @details coord_fix_ratio: set to NULL to use default ggplot parameters
 #' @returns ggplot
 #' @export
@@ -566,8 +572,20 @@ spatPlot2D <- function(
         save_plot = NULL,
         save_param = list(),
         theme_param = list(),
-        default_save_name = "spatPlot2D") {
+        default_save_name = "spatPlot2D",
+        view = NULL,
+        space = NULL) {
     checkmate::assert_class(gobject, "giotto")
+
+    # Pre-narrow once via materialize for the slots this plot reads.
+    # Downstream helpers see a narrowed gobject and don't re-resolve
+    # view/space per call.
+    if (!is.null(view) || !is.null(space)) {
+        gobject <- GiottoClass::materialize(gobject, view, space = space,
+            slots = c("cell_metadata", "spatial_locs",
+                "spatial_enrichment", "expression", "dimension_reduction",
+                "images"))
+    }
 
     # deprecation message
     if (!is.null(largeImage_name)) {
