@@ -60,7 +60,9 @@ dimPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "dimPlot2D"
+  default_save_name = "dimPlot2D",
+  view = NULL,
+  space = NULL
 )
 
 dimPlot(...)

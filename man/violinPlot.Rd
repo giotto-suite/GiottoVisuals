@@ -22,7 +22,9 @@ violinPlot(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "violinPlot"
+  default_save_name = "violinPlot",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

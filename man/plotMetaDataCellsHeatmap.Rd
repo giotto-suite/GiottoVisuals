@@ -33,7 +33,9 @@ plotMetaDataCellsHeatmap(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "plotMetaDataCellsHeatmap"
+  default_save_name = "plotMetaDataCellsHeatmap",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

@@ -18,6 +18,8 @@ showClusterHeatmap(
   save_plot = NULL,
   save_param = list(),
   default_save_name = "showClusterHeatmap",
+  view = NULL,
+  space = NULL,
   ...
 )
 }

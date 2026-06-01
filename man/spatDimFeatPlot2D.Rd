@@ -66,7 +66,9 @@ spatDimFeatPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatDimFeatPlot2D"
+  default_save_name = "spatDimFeatPlot2D",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

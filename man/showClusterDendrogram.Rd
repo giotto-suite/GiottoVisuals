@@ -20,6 +20,8 @@ showClusterDendrogram(
   save_plot = NULL,
   save_param = list(),
   default_save_name = "showClusterDendrogram",
+  view = NULL,
+  space = NULL,
   ...
 )
 }

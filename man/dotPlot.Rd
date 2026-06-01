@@ -38,7 +38,9 @@ dotPlot(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "dotPlot"
+  default_save_name = "dotPlot",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

@@ -31,7 +31,9 @@ ridgePlot(
   save_plot = NULL,
   save_param = list(),
   default_save_name = "ridgePlot",
-  verbose = NULL
+  verbose = NULL,
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

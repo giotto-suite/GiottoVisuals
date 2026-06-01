@@ -34,7 +34,9 @@ spatInSituPlotHex(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatInSituPlotHex"
+  default_save_name = "spatInSituPlotHex",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

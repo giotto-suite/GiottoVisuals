@@ -86,7 +86,9 @@ spatDimPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatDimPlot2D"
+  default_save_name = "spatDimPlot2D",
+  view = NULL,
+  space = NULL
 )
 
 spatDimPlot(gobject, ...)
