@@ -60,7 +60,7 @@ to 1.}
 
 \item{scale_axis}{character (default = \code{"log2"}.
 An x axis scaling to use. This value is passed to
-\code{\link[ggplot2:scale_continuous]{ggplot2::scale_x_continuous()}}. Set \code{"identity"} to remove scaling.}
+\code{\link[ggplot2:scale_x_continuous]{ggplot2::scale_x_continuous()}}. Set \code{"identity"} to remove scaling.}
 
 \item{axis_offset}{numeric. Value to add to values. When this value is not
 provided and \code{axis_scale} is one of \code{"log"}, \code{"log2"}, or \code{"log10"}, a

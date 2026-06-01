@@ -292,7 +292,7 @@ spatDimPlot(g)
 \seealso{
 \code{\link{spatDimPlot3D}}
 
-Other spatial and dimension reduction visualizations: 
-\code{\link{spatDimPlot3D}()}
+Other spatial and dimension reduction visualizations:
+\code{\link[=spatDimPlot3D]{spatDimPlot3D()}}
 }
 \concept{spatial and dimension reduction visualizations}

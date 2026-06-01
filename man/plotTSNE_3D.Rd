@@ -19,7 +19,7 @@ plotTSNE_3D(
 \item{default_save_name}{default save name of TSNE plot}
 
 \item{...}{
-  Arguments passed on to \code{\link[=dimPlot3D]{dimPlot3D}}
+  Arguments passed on to \code{\link{dimPlot3D}}
   \describe{
     \item{\code{spat_unit}}{spatial unit (e.g. "cell")}
     \item{\code{feat_type}}{feature type (e.g. "rna", "dna", "protein")}
@@ -45,6 +45,17 @@ Discrete colors are used when this is TRUE. continuous colors when FALSE.}
 named vector of colors}
     \item{\code{cell_color_gradient}}{character. continuous colors to use. palette to
 use or vector of colors to use (minimum of 2).}
+    \item{\code{cow_n_col}}{cowplot param: how many columns}
+    \item{\code{cow_rel_h}}{cowplot param: relative heights of rows (e.g. c(1,2))}
+    \item{\code{cow_rel_w}}{cowplot param: relative widths of columns (e.g. c(1,2))}
+    \item{\code{cow_align}}{cowplot param: how to align}
+    \item{\code{group_by}}{character. Create multiple plots based on cell
+annotation column}
+    \item{\code{group_by_subset}}{character. subset the group_by factor column}
+    \item{\code{gradient_midpoint}}{numeric. midpoint for color gradient}
+    \item{\code{gradient_style}}{either 'divergent' (midpoint is used in color scaling)
+or 'sequential' (scaled based on data range)}
+    \item{\code{gradient_limits}}{numeric vector with lower and upper limits}
     \item{\code{select_cell_groups}}{select subset of cells/clusters based on
 cell_color parameter}
     \item{\code{select_cells}}{select subset of cells based on cell IDs}
@@ -54,9 +65,23 @@ cell_color parameter}
     \item{\code{show_cluster_center}}{plot center of selected clusters}
     \item{\code{show_center_label}}{plot label of selected clusters}
     \item{\code{center_point_size}}{size of center points}
+    \item{\code{center_point_border_col}}{border color of center points}
+    \item{\code{center_point_border_stroke}}{border stroke size of center points}
     \item{\code{label_size}}{size of labels}
+    \item{\code{label_fontface}}{font of labels}
     \item{\code{edge_alpha}}{column to use for alpha of the edges}
+    \item{\code{point_shape}}{point with border or not (border or no_border)}
     \item{\code{point_size}}{size of point (cell)}
+    \item{\code{point_alpha}}{transparency of points}
+    \item{\code{point_border_col}}{color of border around points}
+    \item{\code{point_border_stroke}}{stroke size of border around points}
+    \item{\code{title}}{character. title for plot, defaults to cell_color parameter}
+    \item{\code{show_legend}}{logical. show legend}
+    \item{\code{legend_text}}{size of legend text}
+    \item{\code{legend_symbol_size}}{size of legend symbols}
+    \item{\code{background_color}}{color of plot background}
+    \item{\code{axis_text}}{size of axis text}
+    \item{\code{axis_title}}{size of axis title}
   }}
 }
 \value{
@@ -74,15 +99,15 @@ plotTSNE_3D(g)
 
 }
 \seealso{
-Other reduced dimension visualizations: 
-\code{\link{dimPlot2D}()},
-\code{\link{plotPCA}()},
-\code{\link{plotPCA_2D}()},
-\code{\link{plotPCA_3D}()},
-\code{\link{plotTSNE}()},
-\code{\link{plotTSNE_2D}()},
-\code{\link{plotUMAP}()},
-\code{\link{plotUMAP_2D}()},
-\code{\link{plotUMAP_3D}()}
+Other reduced dimension visualizations:
+\code{\link[=dimPlot2D]{dimPlot2D()}},
+\code{\link[=plotPCA]{plotPCA()}},
+\code{\link[=plotPCA_2D]{plotPCA_2D()}},
+\code{\link[=plotPCA_3D]{plotPCA_3D()}},
+\code{\link[=plotTSNE]{plotTSNE()}},
+\code{\link[=plotTSNE_2D]{plotTSNE_2D()}},
+\code{\link[=plotUMAP]{plotUMAP()}},
+\code{\link[=plotUMAP_2D]{plotUMAP_2D()}},
+\code{\link[=plotUMAP_3D]{plotUMAP_3D()}}
 }
 \concept{reduced dimension visualizations}

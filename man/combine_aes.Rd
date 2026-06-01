@@ -28,7 +28,7 @@ combine_aes(a, b, warn_duplicates = FALSE) # b values used for a,c
 combine_aes(b, a, warn_duplicates = FALSE) # a values used for a,c
 }
 \seealso{
-Other ggplot2 plotting wrangling functions: 
-\code{\link{gg_param}()}
+Other ggplot2 plotting wrangling functions:
+\code{\link[=gg_param]{gg_param()}}
 }
 \concept{ggplot2 plotting wrangling functions}

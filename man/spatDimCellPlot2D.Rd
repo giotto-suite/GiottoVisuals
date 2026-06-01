@@ -280,7 +280,7 @@ spatDimCellPlot2D(g, cell_annotation_values = "leiden_clus")
 
 }
 \seealso{
-Other spatial and dimension reduction cell annotation visualizations: 
-\code{\link{spatDimCellPlot}()}
+Other spatial and dimension reduction cell annotation visualizations:
+\code{\link[=spatDimCellPlot]{spatDimCellPlot()}}
 }
 \concept{spatial and dimension reduction cell annotation visualizations}

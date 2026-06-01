@@ -195,7 +195,7 @@ spatFeatPlot2D(g, feats = "Gna12")
 \seealso{
 \code{\link{spatFeatPlot3D}}
 
-Other spatial feature expression visualizations: 
-\code{\link{spatFeatPlot2D_single}()}
+Other spatial feature expression visualizations:
+\code{\link[=spatFeatPlot2D_single]{spatFeatPlot2D_single()}}
 }
 \concept{spatial feature expression visualizations}

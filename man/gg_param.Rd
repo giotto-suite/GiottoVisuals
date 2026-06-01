@@ -89,7 +89,7 @@ ggplot() +
     do.call(geom_point, p_nest_sub)
 }
 \seealso{
-Other ggplot2 plotting wrangling functions: 
-\code{\link{combine_aes}()}
+Other ggplot2 plotting wrangling functions:
+\code{\link[=combine_aes]{combine_aes()}}
 }
 \concept{ggplot2 plotting wrangling functions}

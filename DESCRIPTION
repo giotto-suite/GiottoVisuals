@@ -21,7 +21,6 @@ Encoding: UTF-8
 URL: https://giotto-suite.github.io/Giotto/, https://github.com/giotto-suite/Giotto, https://giotto-suite.github.io/GiottoVisuals/
 BugReports: https://github.com/giotto-suite/Giotto/issues
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Depends:
     R (>= 4.5.0)
 Imports:
@@ -104,3 +103,4 @@ Collate:
     'zzz.R'
 biocViews: Software, Technology, Spatial
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

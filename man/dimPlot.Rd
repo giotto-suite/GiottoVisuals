@@ -241,15 +241,15 @@ g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 dimPlot(g)
 }
 \seealso{
-Other reduced dimension visualizations: 
-\code{\link{plotPCA}()},
-\code{\link{plotPCA_2D}()},
-\code{\link{plotPCA_3D}()},
-\code{\link{plotTSNE}()},
-\code{\link{plotTSNE_2D}()},
-\code{\link{plotTSNE_3D}()},
-\code{\link{plotUMAP}()},
-\code{\link{plotUMAP_2D}()},
-\code{\link{plotUMAP_3D}()}
+Other reduced dimension visualizations:
+\code{\link[=plotPCA]{plotPCA()}},
+\code{\link[=plotPCA_2D]{plotPCA_2D()}},
+\code{\link[=plotPCA_3D]{plotPCA_3D()}},
+\code{\link[=plotTSNE]{plotTSNE()}},
+\code{\link[=plotTSNE_2D]{plotTSNE_2D()}},
+\code{\link[=plotTSNE_3D]{plotTSNE_3D()}},
+\code{\link[=plotUMAP]{plotUMAP()}},
+\code{\link[=plotUMAP_2D]{plotUMAP_2D()}},
+\code{\link[=plotUMAP_3D]{plotUMAP_3D()}}
 }
 \concept{reduced dimension visualizations}

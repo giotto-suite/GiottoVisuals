@@ -118,8 +118,8 @@ spatInSituPlotDensity(g,
 
 }
 \seealso{
-Other In Situ visualizations: 
-\code{\link{spatInSituPlotHex}()},
-\code{\link{spatInSituPlotPoints}()}
+Other In Situ visualizations:
+\code{\link[=spatInSituPlotHex]{spatInSituPlotHex()}},
+\code{\link[=spatInSituPlotPoints]{spatInSituPlotPoints()}}
 }
 \concept{In Situ visualizations}

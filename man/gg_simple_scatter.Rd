@@ -29,12 +29,6 @@ gg_simple_scatter(
 \item{ylab}{a title for the y axis}
 
 \item{main}{an overall title for the plot}
-
-\item{...}{
-  Arguments passed on to \code{\link[ggplot2:aes]{ggplot2::aes}}
-  \describe{
-    \item{\code{}}{}
-  }}
 }
 \value{
 a ggplot object

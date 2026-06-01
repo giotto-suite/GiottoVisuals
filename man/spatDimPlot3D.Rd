@@ -181,7 +181,7 @@ reduction coordinates in plotly mode
 Description of parameters.
 }
 \seealso{
-Other spatial and dimension reduction visualizations: 
-\code{\link{spatDimPlot}()}
+Other spatial and dimension reduction visualizations:
+\code{\link[=spatDimPlot]{spatDimPlot()}}
 }
 \concept{spatial and dimension reduction visualizations}

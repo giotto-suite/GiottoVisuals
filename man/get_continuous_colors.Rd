@@ -24,7 +24,7 @@ then return those \code{n} colors.\cr
 \code{strategy} describes how to make these colors continuous:
 \itemize{
 \item \strong{'interpolate'} interpolates provided colors using
-\code{\link[grDevices:colorRamp]{grDevices::colorRampPalette()}}
+\code{\link[grDevices:colorRampPalette]{grDevices::colorRampPalette()}}
 \item \strong{'recycle'} - recycles the input color vector across the \code{n} requested.
 \item \strong{'cutoff'} - supply only a maximum of as many colors as exist within the
 originally supplied vector.

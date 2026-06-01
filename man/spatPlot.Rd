@@ -74,7 +74,9 @@ spatPlot2D(
   save_plot = NULL,
   save_param = list(),
   theme_param = list(),
-  default_save_name = "spatPlot2D"
+  default_save_name = "spatPlot2D",
+  view = NULL,
+  space = NULL
 )
 
 spatPlot(...)
@@ -271,6 +273,13 @@ see \code{\link{showSaveParameters}}}
 
 \item{default_save_name}{default save name for saving, don't change,
 change save_name in save_param}
+
+\item{view, space}{optional \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} /
+\link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace} or the name of one slotted on
+\code{gobject}. When supplied, \code{gobject} is pre-narrowed via
+\code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} before data is fetched. One resolver
+pass shared across all slot reads; same code path for in-mem and
+on-disk gobjects.}
 
 \item{\dots}{spatPLot(...) passes to spatPlot2D}
 
