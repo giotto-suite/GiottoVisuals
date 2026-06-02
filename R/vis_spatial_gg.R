@@ -575,6 +575,13 @@ spatPlot2D <- function(
         default_save_name = "spatPlot2D",
         view = NULL,
         space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
     .gg_assert_giotto_single(gobject)
 
     # Pre-narrow once for the slots this plot reads.
@@ -934,6 +941,14 @@ spatDeconvPlot <- function(
         default_save_name = "spatDeconvPlot",
         view = NULL,
         space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatDeconvPlot,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
@@ -3052,6 +3067,14 @@ spatFeatPlot2D <- function(
         default_save_name = "spatFeatPlot2D",
         view = NULL,
         space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatFeatPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
@@ -4174,6 +4197,14 @@ spatCellPlot2D <- function(
         default_save_name = "spatCellPlot2D",
         view = NULL,
         space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatCellPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))

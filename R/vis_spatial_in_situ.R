@@ -162,6 +162,15 @@ spatInSituPlotPoints <- function(
         view = NULL,
         space = NULL,
         ...) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotPoints,
+            named = mget(setdiff(names(formals()), "...")),
+            dots = list(...),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     # currently not intended for more than one thing to plot
     checkmate::assert_character(polygon_fill, null.ok = TRUE, len = 1L)
     handle_errors({
@@ -771,6 +780,14 @@ spatInSituPlotHex <- function(gobject,
     default_save_name = "spatInSituPlotHex",
     view = NULL,
     space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotHex,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_info", "spatial_locs",
             "feat_info", "feat_metadata", "images"))
@@ -1044,6 +1061,14 @@ spatInSituPlotDensity <- function(gobject,
     default_save_name = "spatInSituPlotDensity",
     view = NULL,
     space = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotDensity,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("spatial_info", "spatial_locs",
             "feat_info", "feat_metadata", "images"))
