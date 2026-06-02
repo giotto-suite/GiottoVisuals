@@ -37,7 +37,11 @@ plot_output_handler <- function(gobject,
     default_save_name = NULL,
     save_param = list(),
     else_return = NULL) {
-    checkmate::assert_class(gobject, "giotto")
+    # Accepts giotto or giottoMulti — instructions() works on both
+    # via the gAny base. Plot fns that route their data through
+    # combine* / spatValues / gmulti-aware getters can hand back a
+    # gmulti here without per-sample splitting.
+    checkmate::assert_class(gobject, "gAny")
 
     ## output settings detection ##
     show_plot <- show_plot %null% instructions(gobject, param = "show_plot")
