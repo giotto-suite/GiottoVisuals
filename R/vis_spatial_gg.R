@@ -1154,7 +1154,10 @@ spatDeconvPlot <- function(
         save_plot = NULL,
         save_param = list(),
         default_save_name = "dimPlot2D_single") {
-    .gg_assert_giotto_single(gobject)
+    # giottoMulti pass-through: dim reductions live on the joint
+    # @dimension_reduction slot (built by runPCA/runUMAP on the
+    # assembled expression). All downstream getters return joint
+    # subobjects — ggplot sees one combined embedding.
 
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
@@ -1560,9 +1563,10 @@ dimPlot2D <- function(
         default_save_name = "dimPlot2D",
         view = NULL,
         space = NULL) {
-    # arg_list <- c(as.list(environment())) # get all args as list
-    .gg_assert_giotto_single(gobject)
-
+    # giottoMulti pass-through: gmulti carries a joint dim_reduction
+    # slot (PCA / UMAP / TSNE run on the assembled expression matrix);
+    # getDimReduction(mg, ...) returns that single joint embedding and
+    # downstream getters return joint subobjects. No per-sample loop.
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
@@ -1812,8 +1816,6 @@ plotUMAP_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "UMAP_2D",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "umap",
@@ -1844,8 +1846,6 @@ plotUMAP <- function(
         dim_reduction_name = NULL,
         default_save_name = "UMAP",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "umap",
@@ -1881,8 +1881,6 @@ plotTSNE_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "tSNE_2D",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "tsne",
@@ -1914,8 +1912,6 @@ plotTSNE <- function(
         dim_reduction_name = NULL,
         default_save_name = "tSNE",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "tsne",
@@ -1949,8 +1945,6 @@ plotPCA_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "PCA_2D",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "pca",
@@ -1984,8 +1978,6 @@ plotPCA <- function(
         dim_reduction_name = NULL,
         default_save_name = "PCA",
         ...) {
-    .gg_assert_giotto_single(gobject)
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "pca",
