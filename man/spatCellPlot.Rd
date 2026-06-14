@@ -67,7 +67,8 @@ spatCellPlot2D(
   save_param = list(),
   default_save_name = "spatCellPlot2D",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 
 spatCellPlot(...)

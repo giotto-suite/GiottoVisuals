@@ -88,7 +88,8 @@ spatDimCellPlot2D(
   save_param = list(),
   default_save_name = "spatDimCellPlot2D",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 }
 \arguments{

@@ -35,7 +35,8 @@ spatInSituPlotDensity(
   save_param = list(),
   default_save_name = "spatInSituPlotDensity",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 }
 \arguments{

@@ -76,7 +76,8 @@ spatPlot2D(
   theme_param = list(),
   default_save_name = "spatPlot2D",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 
 spatPlot(...)

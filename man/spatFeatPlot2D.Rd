@@ -60,7 +60,8 @@ spatFeatPlot2D(
   save_param = list(),
   default_save_name = "spatFeatPlot2D",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 }
 \arguments{

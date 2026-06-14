@@ -85,6 +85,7 @@ Collate:
     'gg_param.R'
     'gg_settings.R'
     'globals.R'
+    'gmulti.R'
     'gstop.R'
     'mixcolor.R'
     'plot_dendrogram.R'

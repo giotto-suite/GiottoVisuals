@@ -59,7 +59,8 @@ spatFeatPlot2D_single(
   save_param = list(),
   default_save_name = "spatFeatPlot2D_single",
   view = NULL,
-  space = NULL
+  space = NULL,
+  samples = NULL
 )
 }
 \arguments{

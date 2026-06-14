@@ -167,7 +167,7 @@ spatInSituPlotPoints <- function(
             plot_fn = spatInSituPlotPoints,
             named = mget(setdiff(names(formals()), "...")),
             dots = list(...),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -779,12 +779,13 @@ spatInSituPlotHex <- function(gobject,
     save_param = list(),
     default_save_name = "spatInSituPlotHex",
     view = NULL,
-    space = NULL) {
+    space = NULL,
+    samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatInSituPlotHex,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -1060,12 +1061,13 @@ spatInSituPlotDensity <- function(gobject,
     save_param = list(),
     default_save_name = "spatInSituPlotDensity",
     view = NULL,
-    space = NULL) {
+    space = NULL,
+    samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatInSituPlotDensity,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)

@@ -574,12 +574,13 @@ spatPlot2D <- function(
         theme_param = list(),
         default_save_name = "spatPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatPlot2D,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -940,12 +941,13 @@ spatDeconvPlot <- function(
         theme_param = list(),
         default_save_name = "spatDeconvPlot",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatDeconvPlot,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -1562,7 +1564,8 @@ dimPlot2D <- function(
         save_param = list(),
         default_save_name = "dimPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     # giottoMulti pass-through: gmulti carries a joint dim_reduction
     # slot (PCA / UMAP / TSNE run on the assembled expression matrix);
     # getDimReduction(mg, ...) returns that single joint embedding and
@@ -2147,7 +2150,8 @@ spatDimPlot2D <- function(
         save_param = list(),
         default_save_name = "spatDimPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
@@ -2471,7 +2475,8 @@ spatFeatPlot2D_single <- function(
         save_param = list(),
         default_save_name = "spatFeatPlot2D_single",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
@@ -3058,12 +3063,13 @@ spatFeatPlot2D <- function(
         save_param = list(),
         default_save_name = "spatFeatPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatFeatPlot2D,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -3575,7 +3581,8 @@ dimFeatPlot2D <- function(
         save_param = list(),
         default_save_name = "dimFeatPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
@@ -3944,7 +3951,8 @@ spatDimFeatPlot2D <- function(
         save_param = list(),
         default_save_name = "spatDimFeatPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
@@ -4188,12 +4196,13 @@ spatCellPlot2D <- function(
         save_param = list(),
         default_save_name = "spatCellPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
             plot_fn = spatCellPlot2D,
             named = mget(names(formals())),
-            gobject = gobject, view = view, space = space
+            gobject = gobject, view = view, space = space, samples = samples
         ))
     }
     .gg_assert_giotto_single(gobject)
@@ -4419,7 +4428,8 @@ dimCellPlot2D <- function(
         save_param = list(),
         default_save_name = "dimCellPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
@@ -4702,7 +4712,8 @@ spatDimCellPlot2D <- function(
         save_param = list(),
         default_save_name = "spatDimCellPlot2D",
         view = NULL,
-        space = NULL) {
+        space = NULL,
+        samples = NULL) {
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
