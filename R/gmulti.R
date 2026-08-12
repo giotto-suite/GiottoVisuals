@@ -112,17 +112,35 @@ NULL
         do.call(plot_fn, c(a, dots))
     })
 
-    if (length(plots) == 1L) return(plots[[1L]])
+    composite <- if (length(plots) == 1L) {
+        plots[[1L]]
+    } else {
+        cowplot::plot_grid(
+            plotlist = plots,
+            ncol = set_default_cow_n_col(
+                cow_n_col = named$cow_n_col,
+                nr_plots = length(plots)
+            ),
+            rel_heights = named$cow_rel_h %null% 1,
+            rel_widths = named$cow_rel_w %null% 1,
+            align = named$cow_align %null% "h"
+        )
+    }
 
-    cowplot::plot_grid(
-        plotlist = plots,
-        ncol = set_default_cow_n_col(
-            cow_n_col = named$cow_n_col,
-            nr_plots = length(plots)
-        ),
-        rel_heights = named$cow_rel_h %null% 1,
-        rel_widths = named$cow_rel_w %null% 1,
-        align = named$cow_align %null% "h"
+    # Route the composite through plot_output_handler so the user's
+    # show_plot / save_plot / return_plot / save_param / default_save_name
+    # are honored at the gmulti level. Per-panel values were already
+    # suppressed in the lapply above.
+    plot_output_handler(
+        gobject = gobject,
+        plot_object = composite,
+        save_plot = named$save_plot,
+        return_plot = named$return_plot,
+        show_plot = named$show_plot,
+        default_save_name = named$default_save_name %null%
+            paste0(deparse(substitute(plot_fn)), "_gmulti"),
+        save_param = named$save_param %null% list(),
+        else_return = NULL
     )
 }
 
@@ -204,7 +222,7 @@ NULL
 # joint-level metadata columns onto it: when a column exists in the
 # multi's joint @cell_metadata but not in the child's local cmeta, this
 # adds it to the child via the public addCellMetadata API. Uses
-# `getCellMetadata(mg, sample = ...)` from the access layer (phase 3) so
+# `getCellMetadata(mg, samples = ...)` from the access layer (phase 3) so
 # only exported APIs are touched — no `:::` reach.
 #
 # The returned giotto is local to the panel iteration; mutations are
@@ -228,7 +246,7 @@ NULL
     # stripped so it lines up with child-local cell IDs.
     joint_cm <- tryCatch(
         GiottoClass::getCellMetadata(gobject,
-            sample = sample, output = "data.table"),
+            samples = sample, output = "data.table"),
         error = function(e) NULL)
     if (is.null(joint_cm) || nrow(joint_cm) == 0L) return(child)
 

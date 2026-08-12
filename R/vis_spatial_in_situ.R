@@ -161,6 +161,7 @@ spatInSituPlotPoints <- function(
         verbose = TRUE,
         view = NULL,
         space = NULL,
+        samples = NULL,
         ...) {
     if (inherits(gobject, "giottoMulti")) {
         return(.gg_multi_dispatch_spatial(
