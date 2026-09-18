@@ -120,13 +120,16 @@ whereas a crop step resolves through whichever coordinator the object
 registers. It uses `geom = "poly"` so a polygon overlapping the window survives
 even when its centroid does not, matching what the eager crop did.
 
-Open: with `view` / `space` now threaded in, the window is applied as a *second*
-view, after `.gg_materialize()` has already resolved the caller's. Two resolver
-passes on the polygon path, where the rest of this section promises one.
-`.sissp_window_view()` takes a `view =` argument that would let the two compose
-into a single view instead, but nothing passes it yet — folding them together
-means threading `view` through the other `.sissp_*` helpers rather than
-materializing once at the top, so it is left as a deliberate seam.
+`.sissp_window_view()` also accepts a `view =`, which copies a caller-supplied
+view onto the scratch name first so the window lands last. Nothing passes it
+today: `spatInSituPlotPoints()` resolves the caller's view eagerly through
+`.gg_materialize()` at the top of the body, so by the time the window is
+recorded there is no view left to compose with and it becomes a second one.
+Two resolver passes on the polygon path, where the rest of this section
+promises one — harmless, but the composed form would need `view` threaded
+through `.sissp_polygon()`, `.sissp_points()` and `.sissp_image()` instead of
+materializing once up front. Which ordering is right when a window and a view
+are given together is still open.
 
 ### There is no backed-vs-unbacked branch here, by design {#no-backed-branch}
 
