@@ -5,26 +5,14 @@ NULL
 # view / space pre-narrow ####
 
 # Thin wrapper around `GiottoClass::materialize()` for plot functions.
+# Do not inline it back — it folds the `view = NULL` guard that every
+# call site would otherwise carry into one place.
 #
-# Why this helper exists (don't inline it back): plot functions take
-# `view = NULL` / `space = NULL` as their default, so every call site
-# would otherwise carry the same `if (!is.null(view) || !is.null(space))`
-# guard. This folds it into one place.
+# `slots` is a character vector of the slot names this plot reads; see
+# [GiottoClass::materialize()] for the canonical set.
 #
-# `materialize()` does have a `view = NULL` method now, so the guard is
-# no longer load-bearing for dispatch — it is an early return that keeps
-# a plot with neither knob set from paying for a resolver pass that
-# narrows nothing.
-#
-# `slots` is a character vector of the slot names this plot reads —
-# see [GiottoClass::materialize()] for the canonical set. The resolver
-# runs ONCE for the listed slots; the predicate / crop is evaluated
-# once regardless of how many combine* / getter calls the plot
-# internals make.
-#
-# Backend-agnostic by design: `materialize()` auto-selects
-# `dataTableCoordinator` for in-mem gobjects and `parquetCoordinator`
-# for `gsource`-backed gobjects via `.default_view_coordinator`.
+# Why the guard is needed, and why this stays backend-agnostic: see
+# "View / space pre-narrow" in vignettes/articles/design.Rmd.
 #
 #' @keywords internal
 #' @noRd
