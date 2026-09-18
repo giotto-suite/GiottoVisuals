@@ -55,7 +55,9 @@ dimCellPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "dimCellPlot2D"
+  default_save_name = "dimCellPlot2D",
+  view = NULL,
+  space = NULL
 )
 
 dimCellPlot(gobject, ...)

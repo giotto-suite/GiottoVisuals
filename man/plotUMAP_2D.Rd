@@ -19,7 +19,7 @@ plotUMAP_2D(
 \item{default_save_name}{default save name of UMAP plot}
 
 \item{...}{
-  Arguments passed on to \code{\link[=dimPlot2D]{dimPlot2D}}
+  Arguments passed on to \code{\link{dimPlot2D}}
   \describe{
     \item{\code{spat_unit}}{spatial unit (e.g. "cell")}
     \item{\code{feat_type}}{feature type (e.g. "rna", "dna", "protein")}
@@ -30,6 +30,7 @@ plotUMAP_2D(
 see \code{\link{showSaveParameters}}}
     \item{\code{dim1_to_use}}{numeric. dimension to use on x-axis}
     \item{\code{dim2_to_use}}{numeric. dimension to use on y-axis}
+    \item{\code{dim3_to_use}}{numeric. dimension to use on z-axis}
     \item{\code{show_NN_network}}{logical. Show underlying NN network}
     \item{\code{nn_network_to_use}}{character. type of NN network to use (kNN vs sNN)}
     \item{\code{network_name}}{character. name of NN network to use,
@@ -98,15 +99,15 @@ g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 plotUMAP_2D(g)
 }
 \seealso{
-Other reduced dimension visualizations: 
-\code{\link{dimPlot2D}()},
-\code{\link{plotPCA}()},
-\code{\link{plotPCA_2D}()},
-\code{\link{plotPCA_3D}()},
-\code{\link{plotTSNE}()},
-\code{\link{plotTSNE_2D}()},
-\code{\link{plotTSNE_3D}()},
-\code{\link{plotUMAP}()},
-\code{\link{plotUMAP_3D}()}
+Other reduced dimension visualizations:
+\code{\link[=dimPlot2D]{dimPlot2D()}},
+\code{\link[=plotPCA]{plotPCA()}},
+\code{\link[=plotPCA_2D]{plotPCA_2D()}},
+\code{\link[=plotPCA_3D]{plotPCA_3D()}},
+\code{\link[=plotTSNE]{plotTSNE()}},
+\code{\link[=plotTSNE_2D]{plotTSNE_2D()}},
+\code{\link[=plotTSNE_3D]{plotTSNE_3D()}},
+\code{\link[=plotUMAP]{plotUMAP()}},
+\code{\link[=plotUMAP_3D]{plotUMAP_3D()}}
 }
 \concept{reduced dimension visualizations}

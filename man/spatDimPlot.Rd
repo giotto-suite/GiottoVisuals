@@ -86,7 +86,9 @@ spatDimPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatDimPlot2D"
+  default_save_name = "spatDimPlot2D",
+  view = NULL,
+  space = NULL
 )
 
 spatDimPlot(gobject, ...)
@@ -292,7 +294,7 @@ spatDimPlot(g)
 \seealso{
 \code{\link{spatDimPlot3D}}
 
-Other spatial and dimension reduction visualizations: 
-\code{\link{spatDimPlot3D}()}
+Other spatial and dimension reduction visualizations:
+\code{\link[=spatDimPlot3D]{spatDimPlot3D()}}
 }
 \concept{spatial and dimension reduction visualizations}

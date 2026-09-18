@@ -31,7 +31,9 @@ spatDeconvPlot(
   save_plot = NULL,
   save_param = list(),
   theme_param = list(),
-  default_save_name = "spatDeconvPlot"
+  default_save_name = "spatDeconvPlot",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

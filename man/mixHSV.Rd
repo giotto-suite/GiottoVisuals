@@ -69,7 +69,7 @@ points(seq(255), y = rep(1.5, 255), col = b, pch = 15)
 points(seq(255), y = rep(1, 255), col = x, pch = 15)
 }
 \seealso{
-Other colormixing functions: 
-\code{\link{mixRGB}()}
+Other colormixing functions:
+\code{\link[=mixRGB]{mixRGB()}}
 }
 \concept{colormixing functions}

@@ -27,7 +27,7 @@ A plot function moves through four layers, top to bottom:
 | Layer | Where | Responsibility |
 |-------|-------|----------------|
 | Entry | `vis_spatial_gg.R`, `vis_spatial_in_situ.R`, `vis_spatial_plotly.R`, `plot_*.R` | User-facing function, argument defaults, orchestration |
-| Data input | `GiottoClass` getters, `spatValues()`, `combine*Data()` | Pull values out of the gobject into a `data.table` |
+| Data input | `GiottoClass` getters, `spatValues()`, `combine*Data()`, `.gg_materialize()` | Pull values out of the gobject into a `data.table` |
 | Render | `gg_info_layers.R`, `gg_param.R`, `aux_defaults.R`, `color_palettes.R` | Turn a table plus params into ggplot layers |
 | Output | `aux_output.R`, `aux_save.R` | Show / save / return, per `giottoInstructions` |
 
@@ -39,9 +39,9 @@ for most of the work in [Planned Work](#planned-work).
 
 ## Data Input
 
-### The three input paths
+### The four input paths
 
-There is no single data-input API. Three paths coexist, in rough order of
+There is no single data-input API. Four paths coexist, in rough order of
 preference for new code:
 
 1. **`spatValues()`** — the funnel. Give it `feats` and it searches the gobject
@@ -54,6 +54,8 @@ preference for new code:
    `getDimReduction()`, `getSpatialGrid()`, `getGiottoImage()`,
    `getExpression()`. Used where the thing wanted is a whole slot, not a set of
    named values: networks, grids, images, embeddings.
+4. **`.gg_materialize()`** — not a fetch. A pre-narrow applied before any of the
+   above (see [View / space pre-narrow](#view-space-pre-narrow)).
 
 All of them return eagerly. `spatValues()` and the `combine*` functions return
 `data.table`; the getters are called with `output = "data.table"` /
@@ -80,6 +82,55 @@ branch at the call site. Feature-value collection in `spatFeatPlot2D_single()`,
 `dimFeatPlot2D()`, the 3D variants, `violinPlot()`, `dotPlot()` and
 `plotRidge()` all route this way.
 
+### View / space pre-narrow {#view-space-pre-narrow}
+
+Plot functions that accept `view` / `space` call `.gg_materialize()` as their
+first statement, before any defaults are resolved or data is fetched.
+
+```r
+gobject <- .gg_materialize(gobject, view, space,
+    slots = c("cell_metadata", "expression", "spatial_enrichment"))
+```
+
+`slots` names the slots that plot reads, from the canonical set in
+`GiottoClass::materialize()`. The resolver runs **once** for the listed slots,
+so the predicate or crop is evaluated a single time no matter how many
+`combine*` / getter calls the plot body then makes.
+
+`.gg_materialize()` exists as a helper rather than an inline call because
+`materialize()` dispatches on `signature(giotto, giottoView)` /
+`(giotto, character)` and has no method for `view = NULL`. Plot functions need
+`view = NULL` to be the default so that callers without a view see normal
+behavior, so every call site would otherwise carry its own
+`if (!is.null(view) || !is.null(space))` guard. The helper folds that guard into
+one place — do not inline it back.
+
+It is backend-agnostic by construction: `materialize()` selects
+`dataTableCoordinator` for in-memory gobjects and `parquetCoordinator` for
+`gsource`-backed ones via `.default_view_coordinator()`. Nothing in
+GiottoVisuals chooses.
+
+#### The in-situ window is also a view
+
+`spatInSituPlotPoints()`'s `xlim` / `ylim` are not a separate mechanism.
+`.sissp_window_view()` records the window as a crop step on a scratch view of a
+local copy of the gobject, rather than cropping the polygon carrier eagerly —
+a carrier crop works on a `SpatVector` and has no route on a disk-backed store,
+whereas a crop step resolves through whichever coordinator the object
+registers. It uses `geom = "poly"` so a polygon overlapping the window survives
+even when its centroid does not, matching what the eager crop did.
+
+`.sissp_window_view()` also accepts a `view =`, which copies a caller-supplied
+view onto the scratch name first so the window lands last. Nothing passes it
+today: `spatInSituPlotPoints()` resolves the caller's view eagerly through
+`.gg_materialize()` at the top of the body, so by the time the window is
+recorded there is no view left to compose with and it becomes a second one.
+Two resolver passes on the polygon path, where the rest of this section
+promises one — harmless, but the composed form would need `view` threaded
+through `.sissp_polygon()`, `.sissp_points()` and `.sissp_image()` instead of
+materializing once up front. Which ordering is right when a window and a view
+are given together is still open.
+
 ### There is no backed-vs-unbacked branch here, by design {#no-backed-branch}
 
 A disk-backed gobject is still class `giotto`. Backing lives one level down, in
@@ -104,8 +155,8 @@ could serve those columns natively.
 GiottoVisuals. GiottoVisuals imports only GiottoUtils and GiottoClass and must
 stay that way. Any behavior that has to differ by carrier is expressed as a
 generic in GiottoClass with an in-memory default method, and implemented for
-stores in GiottoDisk — one call from here, no branch, the right implementation
-chosen below.
+stores in GiottoDisk. `.gg_materialize()` is the model: one call, no branch,
+the right coordinator chosen below.
 
 ## Render
 
@@ -282,12 +333,13 @@ is not re-derived.
    branch needs to route through a generic so a backed store can serve a narrow
    feature set as a column pull instead of `dgCMatrix` to dense.
 
-4. **Push `select_cells` / `select_cell_groups` / `xlim` / `ylim` down to the
-   fetch.** These are predicates, but they are applied after the data is in
-   hand, as `data.table` filters in plot bodies. Expressed instead as steps on
-   `GiottoClass`'s view / coordinator machinery they would be evaluated once,
-   at the source, on the backed side. Depends on that machinery being threaded
-   through the plot functions first.
+4. **Push `select_cells` / `select_cell_groups` down to the fetch.** These are
+   predicates, but they are applied after the data is in hand, as `data.table`
+   filters in plot bodies. Expressed instead as view steps they would be
+   evaluated once, at the source, on the backed side. `xlim` / `ylim` already
+   work this way in `spatInSituPlotPoints()` — see
+   [the in-situ window](#view-space-pre-narrow) — so the pattern is
+   established; these two are what is left.
 
 5. **Consolidate the request spec.** `GiottoClass::svkey` is already a
    declarative, serializable "data to fetch" object with a `@get` closure that

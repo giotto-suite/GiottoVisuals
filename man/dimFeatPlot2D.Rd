@@ -45,7 +45,9 @@ dimFeatPlot2D(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "dimFeatPlot2D"
+  default_save_name = "dimFeatPlot2D",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

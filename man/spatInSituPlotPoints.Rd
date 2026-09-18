@@ -56,6 +56,8 @@ spatInSituPlotPoints(
   save_param = list(),
   default_save_name = "spatInSituPlotPoints",
   verbose = TRUE,
+  view = NULL,
+  space = NULL,
   ...
 )
 }
@@ -172,7 +174,15 @@ change save_name in save_param}
 
 \item{verbose}{be verbose}
 
-\item{...}{additional params to pass to \code{\link[GiottoClass:spatValues]{GiottoClass::spatValues()}}}
+\item{view, space}{optional \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} /
+\link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace} or the name of one slotted on
+\code{gobject}. When supplied, \code{gobject} is pre-narrowed via
+\code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} before any sub-layer fetches its data.
+One resolver pass is shared across the polygon / point / image
+helpers. Backend-agnostic: in-mem and on-disk gobjects take the
+same code path via the registered view coordinator.}
+
+\item{...}{additional params to pass to \code{\link[GiottoClass:spatValues]{spatValues()}}}
 }
 \value{
 ggplot
@@ -236,8 +246,8 @@ spatInSituPlotPoints(g,
 
 }
 \seealso{
-Other In Situ visualizations: 
-\code{\link{spatInSituPlotDensity}()},
-\code{\link{spatInSituPlotHex}()}
+Other In Situ visualizations:
+\code{\link[=spatInSituPlotDensity]{spatInSituPlotDensity()}},
+\code{\link[=spatInSituPlotHex]{spatInSituPlotHex()}}
 }
 \concept{In Situ visualizations}

@@ -33,7 +33,9 @@ spatInSituPlotDensity(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatInSituPlotDensity"
+  default_save_name = "spatInSituPlotDensity",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{
@@ -118,8 +120,8 @@ spatInSituPlotDensity(g,
 
 }
 \seealso{
-Other In Situ visualizations: 
-\code{\link{spatInSituPlotHex}()},
-\code{\link{spatInSituPlotPoints}()}
+Other In Situ visualizations:
+\code{\link[=spatInSituPlotHex]{spatInSituPlotHex()}},
+\code{\link[=spatInSituPlotPoints]{spatInSituPlotPoints()}}
 }
 \concept{In Situ visualizations}

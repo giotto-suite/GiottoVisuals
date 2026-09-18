@@ -109,9 +109,13 @@ dotPlot <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "dotPlot") {
+    default_save_name = "dotPlot",
+    view = NULL,
+    space = NULL) {
     checkmate::assert_character(cluster_column, len = 1L)
     checkmate::assert_class(gobject, "giotto")
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "expression", "spatial_enrichment"))
     if (!is.null(gradient_limits)) {
         checkmate::assert_numeric(gradient_limits, len = 2L)
     }

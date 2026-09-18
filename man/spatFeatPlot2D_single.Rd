@@ -57,7 +57,9 @@ spatFeatPlot2D_single(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatFeatPlot2D_single"
+  default_save_name = "spatFeatPlot2D_single",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{
@@ -191,7 +193,7 @@ spatFeatPlot2D_single(g, feats = c("Gna12", "Ccnd2", "Btbd17"))
 \seealso{
 \code{\link{spatFeatPlot3D}}
 
-Other spatial feature expression visualizations: 
-\code{\link{spatFeatPlot2D}()}
+Other spatial feature expression visualizations:
+\code{\link[=spatFeatPlot2D]{spatFeatPlot2D()}}
 }
 \concept{spatial feature expression visualizations}

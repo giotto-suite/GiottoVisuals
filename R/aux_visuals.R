@@ -2,6 +2,26 @@
 NULL
 
 
+# view / space pre-narrow ####
+
+# Thin wrapper around `GiottoClass::materialize()` for plot functions.
+# Do not inline it back — it folds the `view = NULL` guard that every
+# call site would otherwise carry into one place.
+#
+# `slots` is a character vector of the slot names this plot reads; see
+# [GiottoClass::materialize()] for the canonical set.
+#
+# Why the guard is needed, and why this stays backend-agnostic: see
+# "View / space pre-narrow" in vignettes/articles/design.Rmd.
+#
+#' @keywords internal
+#' @noRd
+.gg_materialize <- function(gobject, view, space, slots) {
+    if (is.null(view) && is.null(space)) return(gobject)
+    GiottoClass::materialize(gobject, view, space = space, slots = slots)
+}
+
+
 # coord fixed ratio ####
 
 .aspect_ratio <- function(pl, coord_fix_ratio = NULL) {

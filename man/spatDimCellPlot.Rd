@@ -8,7 +8,7 @@ spatDimCellPlot(...)
 }
 \arguments{
 \item{...}{
-  Arguments passed on to \code{\link[=spatDimCellPlot2D]{spatDimCellPlot2D}}
+  Arguments passed on to \code{\link{spatDimCellPlot2D}}
   \describe{
     \item{\code{plot_alignment}}{direction to align plot}
     \item{\code{cell_annotation_values}}{numeric cell annotation columns}
@@ -120,7 +120,7 @@ spatDimCellPlot(g, cell_annotation_values = "leiden_clus")
 
 }
 \seealso{
-Other spatial and dimension reduction cell annotation visualizations: 
-\code{\link{spatDimCellPlot2D}()}
+Other spatial and dimension reduction cell annotation visualizations:
+\code{\link[=spatDimCellPlot2D]{spatDimCellPlot2D()}}
 }
 \concept{spatial and dimension reduction cell annotation visualizations}

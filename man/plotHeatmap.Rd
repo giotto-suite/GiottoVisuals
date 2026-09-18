@@ -32,7 +32,9 @@ plotHeatmap(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "plotHeatmap"
+  default_save_name = "plotHeatmap",
+  view = NULL,
+  space = NULL
 )
 }
 \arguments{

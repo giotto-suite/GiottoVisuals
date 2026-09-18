@@ -76,7 +76,12 @@ ridgePlot <- function(gobject, feats, ...,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "ridgePlot",
-    verbose = NULL) {
+    verbose = NULL,
+    view = NULL,
+    space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "expression",
+            "spatial_enrichment", "dimension_reduction"))
     value <- NULL # NSE vars
     package_check("ggridges")
     checkmate::assert_character(feats)
