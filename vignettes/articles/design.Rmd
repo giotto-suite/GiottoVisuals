@@ -53,9 +53,12 @@ preference for new code:
 3. **Direct slot getters** — `getSpatialLocations()`, `getSpatialNetwork()`,
    `getDimReduction()`, `getSpatialGrid()`, `getGiottoImage()`,
    `getExpression()`. Used where the thing wanted is a whole slot, not a set of
-   named values: networks, grids, images, embeddings. A network is the one slot
-   whose getter is not enough on its own — see
-   [A network is edges](#network-seam).
+   named values: networks, grids, images, embeddings. A network's getter is not
+   enough on its own: it returns edges, and the endpoint coordinates needed to
+   draw them are attached with `GiottoClass::annotateSpatialNetwork()`. The seam
+   and what follows from it — live coordinates, an inner join, and nodes coming
+   from the locations rather than the edges — are in GiottoClass's design
+   article under Networks, and in ADR 0004.
 4. **`.gg_materialize()`** — not a fetch. A pre-narrow applied before any of the
    above (see [View / space pre-narrow](#view-space-pre-narrow)).
 
@@ -83,44 +86,6 @@ The consequence for plot functions is that `cell_color = "leiden_clus"`,
 branch at the call site. Feature-value collection in `spatFeatPlot2D_single()`,
 `dimFeatPlot2D()`, the 3D variants, `violinPlot()`, `dotPlot()` and
 `plotRidge()` all route this way.
-
-### A network is edges; everything else is attached {#network-seam}
-
-`getSpatialNetwork(output = "networkDT")` returns `from`, `to` and the edge
-attributes, and that is the whole of what a network stores. Since GiottoClass
-0.6.0 a `spatialNetworkObj` holds an igraph whose vertices carry a name and
-nothing else, so anything about the *cells* an edge runs between — a cluster
-label, a position — is not withheld by the getter, it is absent from the object.
-
-Attaching that information is
-[`annotateSpatialNetwork()`](https://drieslab.github.io/GiottoClass/reference/annotateSpatialNetwork.html)'s
-job, and its two annotations are one operation on two sources: take a cell-keyed
-value and write it onto each end of the edge. `cluster_column` resolves through
-`spatValues()`, so a label can come from metadata, expression or enrichment
-alike. `coordinates` reads the spatial locations and emits
-`sdim[xyz]_begin` / `_end`. Both are optional, so a caller pays only for what it
-reads — a plot asks for coordinates and no label, a proximity analysis asks for
-a label and no coordinates.
-
-Two consequences matter to this package.
-
-**Coordinates are read live**, so a plot never has to think about frames. If a
-`space` moved the locations, the edges drawn against them move with no
-space-aware code anywhere in the network path, and `distance` — the one
-scale-sensitive field a network carries — is not something anything draws.
-
-**The join is inner, and that is where a `view` bites.** An edge whose endpoint
-is absent from the locations has nowhere to be drawn, so it is dropped.
-`materialize()` narrows `spatial_locs`, the edges follow, and the plot layer
-contains no view logic for networks at all. This is the same rule `select_cells`
-has always applied by hand.
-
-It also fixes where the *node* set comes from, which is the part that is easy to
-get backwards. An edge table cannot represent a cell with no edges — there is no
-row for it in any schema. So points are drawn from the spatial locations and
-segments from the annotated edges, and a cell that survives a narrowing but
-keeps no neighbours correctly draws as a point with no segment. The edges are
-induced; the nodes are not the network's to supply.
 
 ### View / space pre-narrow {#view-space-pre-narrow}
 
