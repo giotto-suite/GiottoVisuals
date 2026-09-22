@@ -14,6 +14,7 @@
 #' @param h height of horizontal lines to plot
 #' @param h_color color of horizontal lines
 #' @param rotate rotate dendrogram 90 degrees
+#' @inheritParams gmulti_params
 #' @inheritDotParams ggdendro::ggdendrogram
 #' @details Expression correlation dendrogram for selected clusters.
 #' @returns ggplot

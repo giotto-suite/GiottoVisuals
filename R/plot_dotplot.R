@@ -25,6 +25,7 @@
 #' @param expression_values character. Expression values to use.
 #' @param title character. title for plot
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
 #' library(GiottoClass)

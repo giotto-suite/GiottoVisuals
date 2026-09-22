@@ -495,14 +495,7 @@
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
-#' @param view,space optional character(1) name of a
-#' [GiottoClass::giottoView-class] / [GiottoClass::giottoSpace-class]
-#' slotted on `gobject`. A recipe object is not accepted — it has no
-#' name, so nothing downstream could say which frame a result was
-#' computed in. When supplied, `gobject` is pre-narrowed via
-#' [GiottoClass::materialize()] before data is fetched. One resolver
-#' pass shared across all slot reads; same code path for in-mem and
-#' on-disk gobjects.
+#' @inheritParams gmulti_params
 #' @details coord_fix_ratio: set to NULL to use default ggplot parameters
 #' @returns ggplot
 #' @export
@@ -912,6 +905,7 @@ spatPlot <- function(...) {
 #' @param axis_text size of axis text
 #' @param axis_title size of axis title
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @returns ggplot
 #' @export
 spatDeconvPlot <- function(
@@ -1510,6 +1504,7 @@ spatDeconvPlot <- function(
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 #' dimPlot2D(g)
 #' @export
+#' @inheritParams gmulti_params
 dimPlot2D <- function(
         gobject,
         spat_unit = NULL,
@@ -2060,6 +2055,7 @@ plotPCA <- function(
 #' @param vor_border_color border color for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction visualizations
 #' @returns ggplot
@@ -2413,6 +2409,7 @@ spatDimPlot <- function(gobject, ...) {
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial feature expression visualizations
 #' @returns ggplot
@@ -3000,6 +2997,7 @@ spatFeatPlot2D_single <- function(
 #' @param axis_text size of axis text
 #' @param axis_title size of axis title
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial feature expression visualizations
 #' @returns ggplot
@@ -3520,6 +3518,7 @@ spatFeatPlot2D <- function(
 #' @param order order points according to feature expression
 #' @param scale_alpha_with_expression scale expression with ggplot alpha
 #' parameter
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family dimension reduction feature expression visualizations
 #' @returns ggplot
@@ -3881,6 +3880,7 @@ dimFeatPlot2D <- function(
 #' @param vor_border_color border colorr for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparancy of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction feature expression visualizations
 #' @returns ggplot
@@ -4128,6 +4128,7 @@ spatDimFeatPlot2D <- function(
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial cell annotation visualizations
 #' @returns ggplot
@@ -4366,6 +4367,7 @@ spatCellPlot <- function(...) {
 #' @inheritParams plot_spatenr_params
 #' @inheritParams plot_params
 #' @param cell_annotation_values numeric cell annotation columns
+#' @inheritParams gmulti_params
 #' @details Description of parameters. For 3D plots see \code{\link{dimPlot3D}}
 #' @family dimension reduction cell annotation visualizations
 #' @returns ggplot
@@ -4622,6 +4624,7 @@ dimCellPlot <- function(gobject, ...) {
 #' @param vor_border_color border colorr for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparancy of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction cell annotation visualizations
 #' @returns ggplot

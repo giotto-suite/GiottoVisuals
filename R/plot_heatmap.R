@@ -12,6 +12,7 @@
 #' (e.g. "pearson", "spearman")
 #' @param distance distance method to use for hierarchical clustering,
 #' default to "ward.D"
+#' @inheritParams gmulti_params
 #' @inheritDotParams ComplexHeatmap::Heatmap
 #' @details Correlation heatmap of selected clusters.
 #' @returns ggplot
@@ -143,6 +144,7 @@ showClusterHeatmap <- function(gobject,
 #' @param feat_label_selection subset of features to show on y-axis
 #' @param axis_text_y_size size for y-axis text
 #' @param legend_nrows number of rows for the cluster legend
+#' @inheritParams gmulti_params
 #' @returns ggplot
 #' @details If you want to display many features there are 2 ways to proceed:
 #' \itemize{
@@ -444,6 +446,7 @@ plotHeatmap <- function(gobject,
 #' @param y_text_size size of y-axis text
 #' @param strip_text_size size of strip text
 #' @param plot_title deprecated. Use title param
+#' @inheritParams gmulti_params
 #' @details Creates heatmap for the average expression of selected features
 #' in the different annotation/cluster groups.
 #' Calculation of cluster or feature order is done on the provided expression
@@ -849,6 +852,7 @@ plotMetaDataHeatmap <- function(
 #' @param y_text_size size of y-axis text
 #' @param y_axis_title character. default is "genes".
 #' @param strip_text_size size of strip text
+#' @inheritParams gmulti_params
 #' @details Creates heatmap for the average values of selected value columns
 #' in the different annotation groups.
 #' @seealso \code{\link{plotMetaDataHeatmap}} for feature expression instead
