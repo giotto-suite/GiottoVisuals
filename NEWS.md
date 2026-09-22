@@ -6,7 +6,11 @@
 - non-spatial and dim-reduction plots (`dotPlot()`, `violinPlot()`, `ridgePlot()`, `plotHeatmap()`, `plotMetaDataHeatmap()`, `showClusterHeatmap()`, `showClusterDendrogram()`, `dimPlot2D()`, `plotUMAP()`, `plotTSNE()`, `plotPCA()`) accept a `giottoMulti` directly, pooling cells across samples. Their getters already returned joint subobjects; only the class guard was rejecting them.
 - `plot_output_handler()` accepts a `giottoMulti` as well as a `giotto`.
 
+## bug fixes
+- `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now looked up in the spatial locations at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.
+
 ## changes
+- a network drawn under a `view` shows only edges whose endpoints are drawn. This falls out of the endpoint lookup above — the view narrows the spatial locations and the edges follow — and matches what `select_cells` has always done. A `space` needs no handling: the locations the edges join to are already transformed.
 - a `space` named on a spatial plot over a `giottoMulti` sets the panel set only when its membership is closed. A `combinedSpace` lays its members out relative to one another, so it defines the panels and refuses a `samples` outside it; a `perSampleSpace` is open by design, so it transforms every panel without constraining which are drawn.
 
 # GiottoVisuals 0.2.15 (2026/05/14)

@@ -499,7 +499,6 @@ mid_rescaler <- function(mid) {
 
 
 
-
 # plotly helper ####
 
 #' @title plotly_network
