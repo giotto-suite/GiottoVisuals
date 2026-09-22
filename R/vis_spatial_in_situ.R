@@ -44,6 +44,7 @@
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
 #' @param verbose be verbose
 #' @param ... additional params to pass to [spatValues()]
+#' @inheritParams gmulti_params
 #' @returns ggplot
 #' @examples
 #' g <- GiottoData::loadGiottoMini("vizgen")
@@ -152,10 +153,28 @@ spatInSituPlotPoints <- function(
         save_param = list(),
         default_save_name = "spatInSituPlotPoints",
         verbose = TRUE,
+        view = NULL,
+        space = NULL,
+        samples = NULL,
         ...) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotPoints,
+            named = mget(setdiff(names(formals()), "...")),
+            dots = list(...),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
     # currently not intended for more than one thing to plot
     checkmate::assert_character(polygon_fill, null.ok = TRUE, len = 1L)
     handle_errors({
+    # Pre-narrow once for the slots this plot reads (polygons, points,
+    # locations, enrichment, expression-for-fill, metadata, images).
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_info", "spatial_locs",
+            "spatial_enrichment", "feat_info", "feat_metadata",
+            "expression", "images"))
     # set polygon_feat_type
     avail_poly_names <- list_spatial_info_names(gobject = gobject)
     if (polygon_feat_type == "cell" &&
@@ -714,6 +733,7 @@ spatInSituPlotPoints <- function(
 #' @param axis_title title text size
 #' @param legend_text legend text size
 #' @param background_color background color
+#' @inheritParams gmulti_params
 #' @details TODO
 #' @family In Situ visualizations
 #' @returns ggplot
@@ -753,7 +773,21 @@ spatInSituPlotHex <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "spatInSituPlotHex") {
+    default_save_name = "spatInSituPlotHex",
+    view = NULL,
+    space = NULL,
+    samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotHex,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_info", "spatial_locs",
+            "feat_info", "feat_metadata", "images"))
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(
@@ -982,6 +1016,7 @@ spatInSituPlotHex <- function(gobject,
 #' @param axis_title title text size
 #' @param legend_text legend text size
 #' @param background_color background color
+#' @inheritParams gmulti_params
 #' @details TODO
 #' @family In Situ visualizations
 #' @returns ggplot
@@ -1021,7 +1056,21 @@ spatInSituPlotDensity <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "spatInSituPlotDensity") {
+    default_save_name = "spatInSituPlotDensity",
+    view = NULL,
+    space = NULL,
+    samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatInSituPlotDensity,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("spatial_info", "spatial_locs",
+            "feat_info", "feat_metadata", "images"))
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(

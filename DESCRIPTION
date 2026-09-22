@@ -1,6 +1,6 @@
 Package: GiottoVisuals
 Title: Visuals for the Giotto spatial biology analysis ecosystem
-Version: 0.2.15
+Version: 0.2.16
 Authors@R: c(
 	person("Ruben", "Dries", email = "rubendries@gmail.com",
 		 role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7650-7754")),
@@ -21,7 +21,6 @@ Encoding: UTF-8
 URL: https://giotto-suite.github.io/Giotto/, https://github.com/giotto-suite/Giotto, https://giotto-suite.github.io/GiottoVisuals/
 BugReports: https://github.com/giotto-suite/Giotto/issues
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Depends:
     R (>= 4.5.0)
 Imports:
@@ -31,7 +30,7 @@ Imports:
     data.table,
     ggplot2 (>= 3.1.1),
     GiottoUtils (>= 0.1.12),
-    GiottoClass (>= 0.7.0),
+    GiottoClass (>= 0.7.1),
     ggrepel,
     igraph (>= 1.2.4.1),
     methods,
@@ -86,6 +85,7 @@ Collate:
     'gg_param.R'
     'gg_settings.R'
     'globals.R'
+    'gmulti.R'
     'gstop.R'
     'mixcolor.R'
     'plot_dendrogram.R'
@@ -104,3 +104,4 @@ Collate:
     'zzz.R'
 biocViews: Software, Technology, Spatial
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

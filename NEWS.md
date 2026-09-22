@@ -1,3 +1,14 @@
+# GiottoVisuals 0.2.16 (in development)
+
+## enhancements
+- plot functions accept `view` and `space`: the name of a view or coordinate-frame recipe slotted on the object. The object is pre-narrowed through `GiottoClass::materialize()` once, so every slot read in a plot shares one resolver pass. Added to `spatPlot2D()`, `spatInSituPlotPoints()`, `spatInSituPlotHex()`, `spatInSituPlotDensity()`, `spatDeconvPlot()`, `spatFeatPlot2D()`, `spatCellPlot2D()` and the heatmap / violin / ridge / dot / dendrogram family.
+- spatial plot functions take a `giottoMulti` and draw one panel per sample, composed with `cowplot::plot_grid()`. `samples` selects which children to draw; `":all:"` is the explicit form of the default.
+- non-spatial and dim-reduction plots (`dotPlot()`, `violinPlot()`, `ridgePlot()`, `plotHeatmap()`, `plotMetaDataHeatmap()`, `showClusterHeatmap()`, `showClusterDendrogram()`, `dimPlot2D()`, `plotUMAP()`, `plotTSNE()`, `plotPCA()`) accept a `giottoMulti` directly, pooling cells across samples. Their getters already returned joint subobjects; only the class guard was rejecting them.
+- `plot_output_handler()` accepts a `giottoMulti` as well as a `giotto`.
+
+## changes
+- a `space` named on a spatial plot over a `giottoMulti` sets the panel set only when its membership is closed. A `combinedSpace` lays its members out relative to one another, so it defines the panels and refuses a `samples` outside it; a `perSampleSpace` is open by design, so it transforms every panel without constraining which are drawn.
+
 # GiottoVisuals 0.2.15 (2026/05/14)
 
 ## bug fixes

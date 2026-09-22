@@ -33,7 +33,10 @@ spatInSituPlotDensity(
   return_plot = NULL,
   save_plot = NULL,
   save_param = list(),
-  default_save_name = "spatInSituPlotDensity"
+  default_save_name = "spatInSituPlotDensity",
+  view = NULL,
+  space = NULL,
+  samples = NULL
 )
 }
 \arguments{
@@ -98,6 +101,26 @@ see \code{\link{showSaveParameters}}}
 
 \item{default_save_name}{default save name for saving, don't change,
 change save_name in save_param}
+
+\item{view}{character. Name of a \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} slotted on
+\code{gobject}. When supplied, the object is narrowed through
+\code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} once before any data is fetched, so every slot
+read in the plot shares one resolver pass. A recipe object is not accepted —
+it has no name, so nothing downstream could say which view a figure came
+from.}
+
+\item{space}{character. Name of a \link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace} slotted on
+\code{gobject}, applied the same way. On a \code{giottoMulti} a
+\link[GiottoClass:combinedSpace-class]{GiottoClass::combinedSpace} also supplies the default \code{samples}, since
+its members are laid out relative to one another and a sample outside that
+layout has no position in the frame. A \link[GiottoClass:perSampleSpace-class]{GiottoClass::perSampleSpace}
+does not: its membership is open, so it reframes every panel without deciding
+which are drawn.}
+
+\item{samples}{character. On a \code{giottoMulti}, which children to draw one
+panel each for. \code{NULL} (default) means all of them, or a \code{combinedSpace}'s
+members when \code{space} names one; \code{":all:"} is the explicit form of the
+default. Ignored for a plain \code{giotto}.}
 }
 \value{
 ggplot
@@ -118,8 +141,8 @@ spatInSituPlotDensity(g,
 
 }
 \seealso{
-Other In Situ visualizations: 
-\code{\link{spatInSituPlotHex}()},
-\code{\link{spatInSituPlotPoints}()}
+Other In Situ visualizations:
+\code{\link[=spatInSituPlotHex]{spatInSituPlotHex()}},
+\code{\link[=spatInSituPlotPoints]{spatInSituPlotPoints()}}
 }
 \concept{In Situ visualizations}

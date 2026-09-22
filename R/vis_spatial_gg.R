@@ -106,7 +106,7 @@
         save_param = list(),
         default_save_name = "spatPlot2D_single") {
     # Check params
-    checkmate::assert_class(gobject, "giotto")
+    .gg_assert_giotto_single(gobject)
 
     point_shape <- match.arg(
         point_shape,
@@ -495,6 +495,7 @@
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details coord_fix_ratio: set to NULL to use default ggplot parameters
 #' @returns ggplot
 #' @export
@@ -566,8 +567,24 @@ spatPlot2D <- function(
         save_plot = NULL,
         save_param = list(),
         theme_param = list(),
-        default_save_name = "spatPlot2D") {
-    checkmate::assert_class(gobject, "giotto")
+        default_save_name = "spatPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+
+    # Pre-narrow once for the slots this plot reads.
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
 
     # deprecation message
     if (!is.null(largeImage_name)) {
@@ -888,6 +905,7 @@ spatPlot <- function(...) {
 #' @param axis_text size of axis text
 #' @param axis_title size of axis title
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @returns ggplot
 #' @export
 spatDeconvPlot <- function(
@@ -917,7 +935,21 @@ spatDeconvPlot <- function(
         save_plot = NULL,
         save_param = list(),
         theme_param = list(),
-        default_save_name = "spatDeconvPlot") {
+        default_save_name = "spatDeconvPlot",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatDeconvPlot,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # check for installed packages
     package_check(pkg_name = "scatterpie", repository = "CRAN")
 
@@ -1120,7 +1152,10 @@ spatDeconvPlot <- function(
         save_plot = NULL,
         save_param = list(),
         default_save_name = "dimPlot2D_single") {
-    checkmate::assert_class(gobject, "giotto")
+    # giottoMulti pass-through: dim reductions live on the joint
+    # @dimension_reduction slot (built by runPCA/runUMAP on the
+    # assembled expression). All downstream getters return joint
+    # subobjects — ggplot sees one combined embedding.
 
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
@@ -1469,6 +1504,7 @@ spatDeconvPlot <- function(
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 #' dimPlot2D(g)
 #' @export
+#' @inheritParams gmulti_params
 dimPlot2D <- function(
         gobject,
         spat_unit = NULL,
@@ -1523,9 +1559,17 @@ dimPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimPlot2D") {
-    # arg_list <- c(as.list(environment())) # get all args as list
-    checkmate::assert_class(gobject, "giotto")
+        default_save_name = "dimPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    # giottoMulti pass-through: gmulti carries a joint dim_reduction
+    # slot (PCA / UMAP / TSNE run on the assembled expression matrix);
+    # getDimReduction(mg, ...) returns that single joint embedding and
+    # downstream getters return joint subobjects. No per-sample loop.
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
 
     handle_errors({
         ## check group_by
@@ -1772,8 +1816,6 @@ plotUMAP_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "UMAP_2D",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "umap",
@@ -1804,8 +1846,6 @@ plotUMAP <- function(
         dim_reduction_name = NULL,
         default_save_name = "UMAP",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "umap",
@@ -1841,8 +1881,6 @@ plotTSNE_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "tSNE_2D",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "tsne",
@@ -1874,8 +1912,6 @@ plotTSNE <- function(
         dim_reduction_name = NULL,
         default_save_name = "tSNE",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "tsne",
@@ -1909,8 +1945,6 @@ plotPCA_2D <- function(
         dim_reduction_name = NULL,
         default_save_name = "PCA_2D",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "pca",
@@ -1944,8 +1978,6 @@ plotPCA <- function(
         dim_reduction_name = NULL,
         default_save_name = "PCA",
         ...) {
-    checkmate::assert_class(gobject, "giotto")
-
     dimPlot2D(
         gobject = gobject,
         dim_reduction_to_use = "pca",
@@ -2023,6 +2055,7 @@ plotPCA <- function(
 #' @param vor_border_color border color for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction visualizations
 #' @returns ggplot
@@ -2113,7 +2146,14 @@ spatDimPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimPlot2D") {
+        default_save_name = "spatDimPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -2369,6 +2409,7 @@ spatDimPlot <- function(gobject, ...) {
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial feature expression visualizations
 #' @returns ggplot
@@ -2431,7 +2472,13 @@ spatFeatPlot2D_single <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatFeatPlot2D_single") {
+        default_save_name = "spatFeatPlot2D_single",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # data.table variables
     cell_ID <- NULL
 
@@ -2950,6 +2997,7 @@ spatFeatPlot2D_single <- function(
 #' @param axis_text size of axis text
 #' @param axis_title size of axis title
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial feature expression visualizations
 #' @returns ggplot
@@ -3013,7 +3061,21 @@ spatFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatFeatPlot2D") {
+        default_save_name = "spatFeatPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatFeatPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -3456,6 +3518,7 @@ spatFeatPlot2D <- function(
 #' @param order order points according to feature expression
 #' @param scale_alpha_with_expression scale expression with ggplot alpha
 #' parameter
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family dimension reduction feature expression visualizations
 #' @returns ggplot
@@ -3517,7 +3580,13 @@ dimFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimFeatPlot2D") {
+        default_save_name = "dimFeatPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
 
     handle_errors({
         # print, return and save parameters
@@ -3811,6 +3880,7 @@ dimFeatPlot2D <- function(
 #' @param vor_border_color border colorr for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparancy of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction feature expression visualizations
 #' @returns ggplot
@@ -3881,7 +3951,14 @@ spatDimFeatPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimFeatPlot2D") {
+        default_save_name = "spatDimFeatPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )
@@ -4051,6 +4128,7 @@ spatDimFeatPlot2D <- function(
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial cell annotation visualizations
 #' @returns ggplot
@@ -4119,7 +4197,21 @@ spatCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatCellPlot2D") {
+        default_save_name = "spatCellPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    if (inherits(gobject, "giottoMulti")) {
+        return(.gg_multi_dispatch_spatial(
+            plot_fn = spatCellPlot2D,
+            named = mget(names(formals())),
+            gobject = gobject, view = view, space = space, samples = samples
+        ))
+    }
+    .gg_assert_giotto_single(gobject)
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "images"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4275,6 +4367,7 @@ spatCellPlot <- function(...) {
 #' @inheritParams plot_spatenr_params
 #' @inheritParams plot_params
 #' @param cell_annotation_values numeric cell annotation columns
+#' @inheritParams gmulti_params
 #' @details Description of parameters. For 3D plots see \code{\link{dimPlot3D}}
 #' @family dimension reduction cell annotation visualizations
 #' @returns ggplot
@@ -4337,7 +4430,13 @@ dimCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "dimCellPlot2D") {
+        default_save_name = "dimCellPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "dimension_reduction",
+            "spatial_enrichment", "expression"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4525,6 +4624,7 @@ dimCellPlot <- function(gobject, ...) {
 #' @param vor_border_color border colorr for voronoi plot
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparancy of voronoi 'cells'
+#' @inheritParams gmulti_params
 #' @details Description of parameters.
 #' @family spatial and dimension reduction cell annotation visualizations
 #' @returns ggplot
@@ -4615,7 +4715,14 @@ spatDimCellPlot2D <- function(
         return_plot = NULL,
         save_plot = NULL,
         save_param = list(),
-        default_save_name = "spatDimCellPlot2D") {
+        default_save_name = "spatDimCellPlot2D",
+        view = NULL,
+        space = NULL,
+        samples = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "spatial_locs",
+            "spatial_enrichment", "expression", "dimension_reduction",
+            "images"))
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )

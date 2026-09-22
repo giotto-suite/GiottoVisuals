@@ -2,6 +2,74 @@
 NULL
 
 
+# view / space pre-narrow ####
+
+# Thin wrapper around `GiottoClass::materialize()` for plot functions.
+# Do not inline it back — it folds the `view = NULL` guard that every
+# call site would otherwise carry into one place.
+#
+# `slots` is a character vector of the slot names this plot reads; see
+# [GiottoClass::materialize()] for the canonical set.
+#
+# Why the guard is needed, and why this stays backend-agnostic: see
+# "View / space pre-narrow" in vignettes/articles/design.Rmd.
+#
+#' @keywords internal
+#' @noRd
+.gg_materialize <- function(gobject, view, space, slots) {
+    if (is.null(view) && is.null(space)) return(gobject)
+    # Same contract GiottoClass's getters enforce: a name, never an
+    # inline recipe. Asserted rather than left to dispatch so the caller
+    # is told what is wrong instead of "unable to find an inherited
+    # method for materialize".
+    if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
+    if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
+    GiottoClass::materialize(gobject, view, space = space, slots = slots)
+}
+
+
+# Class guard: this body handles ONE sample.
+#
+# Why the giottoMulti branch is spelled out rather than left to
+# checkmate: `giottoMulti` is a sibling of `giotto`, not a subclass —
+# both extend `gAny` — so a plain `assert_class(gobject, "giotto")`
+# reports "Must inherit from class 'giotto'", which reads as a type
+# error rather than as the dispatch that was missed.
+#
+# No public plot function can reach that branch any more: the spatial
+# ones return through `.gg_multi_dispatch_spatial()` above their guard,
+# and the non-spatial and dim-reduction ones dropped the guard entirely
+# once their getters became gmulti-aware. What is left is an invariant
+# on the single-sample internals (`.spatPlot2D_single`,
+# `.dimPlot2D_single`) — reaching it means a caller in THIS package
+# skipped its dispatch, so the message names that rather than telling a
+# user a feature is missing.
+#
+# Picks the calling function's name out of the call stack so the same
+# helper can be dropped in wherever `checkmate::assert_class(gobject,
+# "giotto")` lives without per-call boilerplate.
+#
+#' @keywords internal
+#' @noRd
+.gg_assert_giotto_single <- function(gobject) {
+    if (inherits(gobject, "giottoMulti")) {
+        caller <- tryCatch(
+            as.character(sys.call(sys.parent())[[1L]]),
+            error = function(e) "<plot fn>"
+        )
+        fn_name <- caller[[length(caller)]]  # strip pkg:: prefix if any
+        stop(sprintf(paste(
+            "[%s] reached with a giottoMulti; this body draws one sample.",
+            "Multi-sample plotting goes through the dispatcher, so this is",
+            "a missed dispatch in GiottoVisuals rather than something to",
+            "work around at the call site -- please report it.",
+            sep = " "
+        ), fn_name), call. = FALSE)
+    }
+    checkmate::assert_class(gobject, "giotto")
+}
+
+
 # coord fixed ratio ####
 
 .aspect_ratio <- function(pl, coord_fix_ratio = NULL) {

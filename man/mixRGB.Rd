@@ -40,7 +40,7 @@ points(seq(255), y = rep(1, 255), col = x, pch = 15)
 par(op)
 }
 \seealso{
-Other colormixing functions: 
-\code{\link{mixHSV}()}
+Other colormixing functions:
+\code{\link[=mixHSV]{mixHSV()}}
 }
 \concept{colormixing functions}

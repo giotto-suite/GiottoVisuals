@@ -225,6 +225,34 @@ NULL
 
 
 
+# Federation ####
+
+
+#' Params documentation template: gmulti_params
+#' @name gmulti_params
+#' @param view character. Name of a [GiottoClass::giottoView-class] slotted on
+#' `gobject`. When supplied, the object is narrowed through
+#' [GiottoClass::materialize()] once before any data is fetched, so every slot
+#' read in the plot shares one resolver pass. A recipe object is not accepted —
+#' it has no name, so nothing downstream could say which view a figure came
+#' from.
+#' @param space character. Name of a [GiottoClass::giottoSpace-class] slotted on
+#' `gobject`, applied the same way. On a `giottoMulti` a
+#' [GiottoClass::combinedSpace-class] also supplies the default `samples`, since
+#' its members are laid out relative to one another and a sample outside that
+#' layout has no position in the frame. A [GiottoClass::perSampleSpace-class]
+#' does not: its membership is open, so it reframes every panel without deciding
+#' which are drawn.
+#' @param samples character. On a `giottoMulti`, which children to draw one
+#' panel each for. `NULL` (default) means all of them, or a `combinedSpace`'s
+#' members when `space` names one; `":all:"` is the explicit form of the
+#' default. Ignored for a plain `giotto`.
+#' @keywords internal
+#' @returns ggplot
+NULL
+
+
+
 # Documentation dummy for methods that are defined elsewhere
 #' @title hidden_aliases
 #' @name hidden_aliases

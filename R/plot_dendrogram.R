@@ -14,6 +14,7 @@
 #' @param h height of horizontal lines to plot
 #' @param h_color color of horizontal lines
 #' @param rotate rotate dendrogram 90 degrees
+#' @inheritParams gmulti_params
 #' @inheritDotParams ggdendro::ggdendrogram
 #' @details Expression correlation dendrogram for selected clusters.
 #' @returns ggplot
@@ -37,9 +38,13 @@ showClusterDendrogram <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "showClusterDendrogram",
+    view = NULL,
+    space = NULL,
     ...) {
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "expression", "spatial_enrichment"))
 
     values <- match.arg(
         expression_values,

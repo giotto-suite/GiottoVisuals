@@ -16,6 +16,7 @@
 #' @param strip_text size of strip text
 #' @param axis_text_x_size size of x-axis text
 #' @param axis_text_y_size size of y-axis text
+#' @inheritParams gmulti_params
 #' @returns ggplot
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
@@ -42,7 +43,11 @@ violinPlot <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "violinPlot") {
+    default_save_name = "violinPlot",
+    view = NULL,
+    space = NULL) {
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "expression", "spatial_enrichment"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,

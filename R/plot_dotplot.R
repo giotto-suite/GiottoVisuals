@@ -25,6 +25,7 @@
 #' @param expression_values character. Expression values to use.
 #' @param title character. title for plot
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
+#' @inheritParams gmulti_params
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
 #' library(GiottoClass)
@@ -109,9 +110,17 @@ dotPlot <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "dotPlot") {
+    default_save_name = "dotPlot",
+    view = NULL,
+    space = NULL) {
     checkmate::assert_character(cluster_column, len = 1L)
-    checkmate::assert_class(gobject, "giotto")
+    # giottoMulti pass-through: spatValues() routes through the gmulti's
+    # joint / assembled expression + flattened cell_metadata, returning
+    # a single data.table with `cell_ID` namespaced by sample. The dot
+    # aggregations below operate on that unified table the same way
+    # they do for a plain giotto — no per-sample looping needed.
+    gobject <- .gg_materialize(gobject, view, space,
+        slots = c("cell_metadata", "expression", "spatial_enrichment"))
     if (!is.null(gradient_limits)) {
         checkmate::assert_numeric(gradient_limits, len = 2L)
     }

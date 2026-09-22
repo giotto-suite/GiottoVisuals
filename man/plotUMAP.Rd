@@ -14,7 +14,7 @@ plotUMAP(gobject, dim_reduction_name = NULL, default_save_name = "UMAP", ...)
 \item{default_save_name}{default save name of UMAP plot}
 
 \item{...}{
-  Arguments passed on to \code{\link[=dimPlot2D]{dimPlot2D}}
+  Arguments passed on to \code{\link{dimPlot2D}}
   \describe{
     \item{\code{spat_unit}}{spatial unit (e.g. "cell")}
     \item{\code{feat_type}}{feature type (e.g. "rna", "dna", "protein")}
@@ -25,6 +25,7 @@ plotUMAP(gobject, dim_reduction_name = NULL, default_save_name = "UMAP", ...)
 see \code{\link{showSaveParameters}}}
     \item{\code{dim1_to_use}}{numeric. dimension to use on x-axis}
     \item{\code{dim2_to_use}}{numeric. dimension to use on y-axis}
+    \item{\code{dim3_to_use}}{numeric. dimension to use on z-axis}
     \item{\code{show_NN_network}}{logical. Show underlying NN network}
     \item{\code{nn_network_to_use}}{character. type of NN network to use (kNN vs sNN)}
     \item{\code{network_name}}{character. name of NN network to use,
@@ -76,6 +77,23 @@ cell_color parameter}
     \item{\code{background_color}}{color of plot background}
     \item{\code{axis_text}}{size of axis text}
     \item{\code{axis_title}}{size of axis title}
+    \item{\code{view}}{character. Name of a \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} slotted on
+\code{gobject}. When supplied, the object is narrowed through
+\code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} once before any data is fetched, so every slot
+read in the plot shares one resolver pass. A recipe object is not accepted —
+it has no name, so nothing downstream could say which view a figure came
+from.}
+    \item{\code{space}}{character. Name of a \link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace} slotted on
+\code{gobject}, applied the same way. On a \code{giottoMulti} a
+\link[GiottoClass:combinedSpace-class]{GiottoClass::combinedSpace} also supplies the default \code{samples}, since
+its members are laid out relative to one another and a sample outside that
+layout has no position in the frame. A \link[GiottoClass:perSampleSpace-class]{GiottoClass::perSampleSpace}
+does not: its membership is open, so it reframes every panel without deciding
+which are drawn.}
+    \item{\code{samples}}{character. On a \code{giottoMulti}, which children to draw one
+panel each for. \code{NULL} (default) means all of them, or a \code{combinedSpace}'s
+members when \code{space} names one; \code{":all:"} is the explicit form of the
+default. Ignored for a plain \code{giotto}.}
   }}
 }
 \value{
@@ -90,15 +108,15 @@ plotUMAP(g)
 
 }
 \seealso{
-Other reduced dimension visualizations: 
-\code{\link{dimPlot2D}()},
-\code{\link{plotPCA}()},
-\code{\link{plotPCA_2D}()},
-\code{\link{plotPCA_3D}()},
-\code{\link{plotTSNE}()},
-\code{\link{plotTSNE_2D}()},
-\code{\link{plotTSNE_3D}()},
-\code{\link{plotUMAP_2D}()},
-\code{\link{plotUMAP_3D}()}
+Other reduced dimension visualizations:
+\code{\link[=dimPlot2D]{dimPlot2D()}},
+\code{\link[=plotPCA]{plotPCA()}},
+\code{\link[=plotPCA_2D]{plotPCA_2D()}},
+\code{\link[=plotPCA_3D]{plotPCA_3D()}},
+\code{\link[=plotTSNE]{plotTSNE()}},
+\code{\link[=plotTSNE_2D]{plotTSNE_2D()}},
+\code{\link[=plotTSNE_3D]{plotTSNE_3D()}},
+\code{\link[=plotUMAP_2D]{plotUMAP_2D()}},
+\code{\link[=plotUMAP_3D]{plotUMAP_3D()}}
 }
 \concept{reduced dimension visualizations}
