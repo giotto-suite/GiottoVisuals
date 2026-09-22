@@ -98,12 +98,20 @@ so the predicate or crop is evaluated a single time no matter how many
 `combine*` / getter calls the plot body then makes.
 
 `.gg_materialize()` exists as a helper rather than an inline call because
-`materialize()` dispatches on `signature(giotto, giottoView)` /
-`(giotto, character)` and has no method for `view = NULL`. Plot functions need
-`view = NULL` to be the default so that callers without a view see normal
-behavior, so every call site would otherwise carry its own
+`view = NULL` has to be the default, so that callers without a view see normal
+behavior, and every call site would otherwise carry its own
 `if (!is.null(view) || !is.null(space))` guard. The helper folds that guard into
-one place — do not inline it back.
+one place — do not inline it back. The guard is an early return, not a dispatch
+workaround: `materialize()` has `view = "NULL"` methods for both `giotto` and
+`giottoMulti`, and the guard only keeps a plot with neither knob set from paying
+for a resolver pass that narrows nothing.
+
+What `materialize()` has no method for is a **recipe object** — it dispatches on
+`signature(giotto, character)` and `(giotto, "NULL")`, never on `giottoView`.
+That is the contract, not an omission: a view or space is passed by name so that
+a result can say which one produced it. `.gg_materialize()` asserts it with
+`checkmate::assert_string()` rather than letting it surface as "unable to find an
+inherited method".
 
 It is backend-agnostic by construction: `materialize()` selects
 `dataTableCoordinator` for in-memory gobjects and `parquetCoordinator` for
