@@ -169,13 +169,9 @@ spatInSituPlotPoints <- function(
     # currently not intended for more than one thing to plot
     checkmate::assert_character(polygon_fill, null.ok = TRUE, len = 1L)
     handle_errors({
-    # Pre-narrow once for the slots this plot reads (polygons, points,
-    # locations, enrichment, expression-for-fill, metadata, images).
-    gobject <- .gg_materialize(gobject, view, space,
-        slots = c("cell_metadata", "spatial_info", "spatial_locs",
-            "spatial_enrichment", "feat_info", "feat_metadata",
-            "expression", "images"))
-    # set polygon_feat_type
+    # set polygon_feat_type -- resolved BEFORE any narrowing, both because
+    # the window below needs a spat_unit to take its extent from and because
+    # which polygon sets exist is not a thing a view should be able to change
     avail_poly_names <- list_spatial_info_names(gobject = gobject)
     if (polygon_feat_type == "cell" &&
         !"cell" %in% avail_poly_names) {
@@ -187,6 +183,21 @@ spatInSituPlotPoints <- function(
             )
         }
     }
+
+    # `xlim` / `ylim` are a crop, so they compose with `view` rather than
+    # running beside it: the window is appended as a step onto a scratch copy
+    # of whatever view the caller named, and that composed view is what gets
+    # resolved. One pass for both, and the sub-layers below take a gobject
+    # already narrowed to the window -- see `.sissp_window_view()`.
+    .win <- .sissp_window_view(gobject, spat_unit = polygon_feat_type,
+        xlim = xlim, ylim = ylim, view = view)
+
+    # Pre-narrow once for the slots this plot reads (polygons, points,
+    # locations, enrichment, expression-for-fill, metadata, images).
+    gobject <- .gg_materialize(.win$gobject, .win$view, space,
+        slots = c("cell_metadata", "spatial_info", "spatial_locs",
+            "spatial_enrichment", "feat_info", "feat_metadata",
+            "expression", "images"))
 
     send_warn <- getOption("giotto.warn_sispp_feats", TRUE)
     if (is.null(feats) && send_warn) {
@@ -269,8 +280,6 @@ spatInSituPlotPoints <- function(
             polygon_feat_type = polygon_feat_type,
             feat_type = feat_type,
             remove_background_polygon = remove_background_polygon,
-            xlim = xlim,
-            ylim = ylim,
             polygon_fill = polygon_fill,
             spat_loc_name = spat_loc_name,
             spat_enr_name = spat_enr_name,
@@ -409,9 +418,12 @@ spatInSituPlotPoints <- function(
 # behaviour this replaces -- cropping the polygon carrier kept a polygon
 # overlapping the window even when its centroid fell outside.
 #
-# Stacking: a caller-supplied view is copied onto the scratch name first, so
-# the window lands last. That ordering wants revisiting when `view` / `space`
-# become routine here; it is the reading that matches what the eager crop did.
+# Stacking: a caller-supplied view is copied onto the scratch name first and
+# the window's crop step is appended to it, so the window lands last. The two
+# resolve together in one pass -- the window is a crop, so it composes with a
+# view rather than running beside it. Landing last is the reading that matches
+# what the eager crop did: the window is the frame the user is looking at, and
+# it applies to whatever the view already selected.
 .sissp_window_view <- function(gobject, spat_unit,
                                xlim = NULL, ylim = NULL, view = NULL) {
     if (is.null(xlim) && is.null(ylim)) {
@@ -446,8 +458,6 @@ spatInSituPlotPoints <- function(
     polygon_feat_type = NULL,
     feat_type = NULL,
     remove_background_polygon = TRUE,
-    xlim = NULL,
-    ylim = NULL,
     polygon_fill = NULL,
     spat_loc_name = NULL,
     spat_enr_name = NULL,
@@ -475,19 +485,15 @@ spatInSituPlotPoints <- function(
         feat_type = feat_type
     )
 
-    # the window travels as a view, not as a carrier crop -- see
-    # .sissp_window_view() for why
-    .win <- .sissp_window_view(gobject, spat_unit = polygon_feat_type,
-        xlim = xlim, ylim = ylim)
-
+    # The window was folded into the view the caller named and resolved with
+    # it, so `gobject` already arrives cropped -- nothing to record here.
     polygon_combo <- combineCellData(
-        gobject = .win$gobject,
+        gobject = gobject,
         spat_loc_name = spat_loc_name,
         feat_type = feat_type,
         include_poly_info = TRUE,
         poly_info = polygon_feat_type,
-        remove_background_polygon = remove_background_polygon,
-        view = .win$view
+        remove_background_polygon = remove_background_polygon
     )
 
     polygon_dt <- data.table::rbindlist(polygon_combo, fill = TRUE)
