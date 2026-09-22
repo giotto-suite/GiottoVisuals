@@ -233,6 +233,9 @@ jobs:
       - name: Run CMD check
         env:
           _R_CHECK_CRAN_INCOMING_: false
+          # A suggest that is not installable in a given job should skip the
+          # tests that need it, not fail the check.
+          _R_CHECK_FORCE_SUGGESTS_: false
           DISPLAY: 99.0
         run: |
           options(crayon.enabled = TRUE)
