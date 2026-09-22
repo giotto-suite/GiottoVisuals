@@ -72,3 +72,33 @@ test_that("a space moves the edges with the locations", {
 
 # The join rule itself (inner, and what it does to an absent endpoint) is
 # GiottoClass's; see its test-spatial-network-annotate.R.
+
+
+# window / view composition ####################################################
+
+test_that("an in-situ window composes with the view rather than replacing it", {
+    skip_if_no_mini()
+    g <- suppressMessages(GiottoData::loadGiottoMini("vizgen", verbose = FALSE))
+    e <- GiottoClass::ext(g, spat_unit = "aggregate", prefer = "polygon")
+    # view keeps the left half, window keeps the bottom half
+    g <- GiottoClass::crop(g,
+        terra::ext(c(e[1], mean(e[1:2]), e[3], e[4])), view = "left")
+    win <- c(e[3], mean(e[3:4]))
+
+    n <- function(...) {
+        p <- suppressMessages(spatInSituPlotPoints(g,
+            polygon_feat_type = "aggregate", polygon_fill = "nr_feats",
+            polygon_fill_as_factor = FALSE, show_plot = FALSE,
+            save_plot = FALSE, return_plot = TRUE, ...))
+        nrow(p$layers[[1L]]$data)
+    }
+
+    view_only <- n(view = "left")
+    window_only <- n(ylim = win)
+    both <- n(view = "left", ylim = win)
+
+    # an intersection: strictly smaller than either on its own. If the window
+    # replaced the view (or vice versa) one of these would be an equality.
+    expect_lt(both, view_only)
+    expect_lt(both, window_only)
+})

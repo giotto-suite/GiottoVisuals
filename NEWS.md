@@ -11,6 +11,7 @@
 
 ## changes
 - minimum GiottoClass version is `>= 0.7.2`, for `annotateSpatialNetwork()`'s optional annotations.
+- `spatInSituPlotPoints()`'s `xlim` / `ylim` now **compose** with `view` instead of resolving as a second, separate narrowing. The window is appended as a crop step onto the named view and the pair resolves in one pass, so giving both yields their intersection. The machinery for this existed but nothing reached it, because the caller's view was consumed before the window was recorded.
 - a network drawn under a `view` shows only edges whose endpoints are drawn. This falls out of the endpoint lookup above — the view narrows the spatial locations and the edges follow — and matches what `select_cells` has always done. A `space` needs no handling: the locations the edges join to are already transformed.
 - a `space` named on a spatial plot over a `giottoMulti` sets the panel set only when its membership is closed. A `combinedSpace` lays its members out relative to one another, so it defines the panels and refuses a `samples` outside it; a `perSampleSpace` is open by design, so it transforms every panel without constraining which are drawn.
 

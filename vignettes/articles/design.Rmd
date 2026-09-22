@@ -133,16 +133,18 @@ whereas a crop step resolves through whichever coordinator the object
 registers. It uses `geom = "poly"` so a polygon overlapping the window survives
 even when its centroid does not, matching what the eager crop did.
 
-`.sissp_window_view()` also accepts a `view =`, which copies a caller-supplied
-view onto the scratch name first so the window lands last. Nothing passes it
-today: `spatInSituPlotPoints()` resolves the caller's view eagerly through
-`.gg_materialize()` at the top of the body, so by the time the window is
-recorded there is no view left to compose with and it becomes a second one.
-Two resolver passes on the polygon path, where the rest of this section
-promises one — harmless, but the composed form would need `view` threaded
-through `.sissp_polygon()`, `.sissp_points()` and `.sissp_image()` instead of
-materializing once up front. Which ordering is right when a window and a view
-are given together is still open.
+A window and a caller-supplied `view` **compose** rather than running beside
+each other, which is the only reading that keeps this section's promise of one
+resolver pass. `spatInSituPlotPoints()` copies the named view onto the scratch
+name, appends the window's crop step to it, and resolves the pair once; the
+sub-layers are then handed a gobject already narrowed to both and record
+nothing further. The window lands last because it is the frame the user is
+looking at, applied to whatever the view already selected — the same reading
+the eager crop had.
+
+This is why `polygon_feat_type` is resolved before any narrowing: the window
+takes its open axes from that unit's extent, and which polygon sets exist is
+not something a view should be able to change.
 
 ### There is no backed-vs-unbacked branch here, by design {#no-backed-branch}
 
