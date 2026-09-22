@@ -30,7 +30,7 @@ Imports:
     data.table,
     ggplot2 (>= 3.1.1),
     GiottoUtils (>= 0.1.12),
-    GiottoClass (>= 0.7.1),
+    GiottoClass (>= 0.7.2),
     ggrepel,
     igraph (>= 1.2.4.1),
     methods,

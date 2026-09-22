@@ -53,7 +53,12 @@ preference for new code:
 3. **Direct slot getters** — `getSpatialLocations()`, `getSpatialNetwork()`,
    `getDimReduction()`, `getSpatialGrid()`, `getGiottoImage()`,
    `getExpression()`. Used where the thing wanted is a whole slot, not a set of
-   named values: networks, grids, images, embeddings.
+   named values: networks, grids, images, embeddings. A network's getter is not
+   enough on its own: it returns edges, and the endpoint coordinates needed to
+   draw them are attached with `GiottoClass::annotateSpatialNetwork()`. The seam
+   and what follows from it — live coordinates, an inner join, and nodes coming
+   from the locations rather than the edges — are in GiottoClass's design
+   article under Networks, and in ADR 0004.
 4. **`.gg_materialize()`** — not a fetch. A pre-narrow applied before any of the
    above (see [View / space pre-narrow](#view-space-pre-narrow)).
 

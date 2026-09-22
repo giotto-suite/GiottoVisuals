@@ -151,12 +151,16 @@
 
     ## extract spatial network
     if (show_network == TRUE) {
-        spatial_network <- getSpatialNetwork(
+        # Edges plus their endpoint coordinates. The network holds no
+        # geometry itself, so the positions are attached here from the
+        # locations -- and because that join is inner, a narrowed object
+        # drops the edges whose cells are gone with no work here.
+        spatial_network <- GiottoClass::annotateSpatialNetwork(
             gobject = gobject,
             spat_unit = spat_unit,
-            name = spatial_network_name,
-            output = "networkDT",
-            verbose = verbose
+            spatial_network_name = spatial_network_name,
+            spat_loc_name = spat_loc_name,
+            coordinates = TRUE
         )
     } else {
         spatial_network <- NULL
@@ -2582,11 +2586,16 @@ spatFeatPlot2D_single <- function(
 
     ## extract spatial network
     if (show_network) {
-        spatial_network <- getSpatialNetwork(
+        # Edges plus their endpoint coordinates. The network holds no
+        # geometry itself, so the positions are attached here from the
+        # locations -- and because that join is inner, a narrowed object
+        # drops the edges whose cells are gone with no work here.
+        spatial_network <- GiottoClass::annotateSpatialNetwork(
             gobject = gobject,
             spat_unit = spat_unit,
-            name = spatial_network_name,
-            output = "networkDT"
+            spatial_network_name = spatial_network_name,
+            spat_loc_name = spat_loc_name,
+            coordinates = TRUE
         )
     } else {
         spatial_network <- NULL
