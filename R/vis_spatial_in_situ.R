@@ -43,9 +43,11 @@
 #' polygons (default) or points.
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
 #' @param verbose be verbose
-#' @param view,space optional [GiottoClass::giottoView-class] /
-#' [GiottoClass::giottoSpace-class] or the name of one slotted on
-#' `gobject`. When supplied, `gobject` is pre-narrowed via
+#' @param view,space optional character(1) name of a
+#' [GiottoClass::giottoView-class] / [GiottoClass::giottoSpace-class]
+#' slotted on `gobject`. A recipe object is not accepted — it has no
+#' name, so nothing downstream could say which frame a result was
+#' computed in. When supplied, `gobject` is pre-narrowed via
 #' [GiottoClass::materialize()] before any sub-layer fetches its data.
 #' One resolver pass is shared across the polygon / point / image
 #' helpers. Backend-agnostic: in-mem and on-disk gobjects take the

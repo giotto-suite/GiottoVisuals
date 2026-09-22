@@ -495,9 +495,11 @@
 #' @param vor_max_radius maximum radius for voronoi 'cells'
 #' @param vor_alpha transparency of voronoi 'cells'
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
-#' @param view,space optional [GiottoClass::giottoView-class] /
-#' [GiottoClass::giottoSpace-class] or the name of one slotted on
-#' `gobject`. When supplied, `gobject` is pre-narrowed via
+#' @param view,space optional character(1) name of a
+#' [GiottoClass::giottoView-class] / [GiottoClass::giottoSpace-class]
+#' slotted on `gobject`. A recipe object is not accepted — it has no
+#' name, so nothing downstream could say which frame a result was
+#' computed in. When supplied, `gobject` is pre-narrowed via
 #' [GiottoClass::materialize()] before data is fetched. One resolver
 #' pass shared across all slot reads; same code path for in-mem and
 #' on-disk gobjects.

@@ -26,16 +26,19 @@ NULL
 # GiottoClass for the full design):
 #   - `view`   = subset/filter recipe (referenced by name from gobject@view)
 #   - `space`  = coordinate-frame recipe (referenced by name from gobject@spaces);
-#                **carries sample membership via space@samples but does not
-#                itself dispatch samples** — it defaults the samples set.
+#                applied to the panel children, and -- when its membership
+#                is closed -- also the default panel set.
 #   - `samples` = ad-hoc multi-sample selection (character vector, `":all:"`
 #                sentinel, or NULL). NOT a slotted recipe; pure call-time arg.
 #
-# Resolution rules (samples auto-injection from space):
-#   samples = NULL, space = NULL  -> all children, native frame
-#   samples = NULL, space = "S"   -> derive samples from names(S@samples)
-#   samples = c(...), space = "S" -> error if any sample not in S@samples
-#   samples = c(...), space = NULL -> those samples, native frame
+# Resolution rules (samples auto-injection from space). Only a
+# `combinedSpace` constrains the panel set; see `.resolve_samples` for why
+# a `perSampleSpace` deliberately does not:
+#   samples = NULL, space = NULL     -> all children, native frame
+#   samples = NULL, combined "S"     -> S's members, in S's frame
+#   samples = c(...), combined "S"   -> error if any sample is not in S
+#   samples = NULL, perSample "S"    -> all children, each in S's frame
+#   samples = c(...), space = NULL   -> those samples, native frame
 #
 # Per-panel call: each iteration extracts a single-sample "panel child"
 # via `.gg_build_panel_child` — a giotto built from the gmulti's child
@@ -48,6 +51,9 @@ NULL
 .gg_multi_dispatch_spatial <- function(
         plot_fn, named, dots = list(), gobject, view, space, samples = NULL) {
     checkmate::assert_class(gobject, "giottoMulti")
+    # A name, never an inline recipe -- see `.gg_materialize`.
+    if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
+    if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
 
     child_names <- names(gobject@objects)
     if (length(child_names) == 0L) {
@@ -57,12 +63,18 @@ NULL
 
     samples <- .resolve_samples(gobject, samples, space, child_names)
 
-    # View applies once across the gmulti before the panel loop. The
-    # resolver's surviving-cell cache fills here, and each per-child
-    # getter chain in the loop below pulls only the slice belonging
-    # to its sample.
-    if (!is.null(view)) {
-        gobject <- GiottoClass::materialize(gobject, view, space = NULL)
+    # View and space both apply once across the gmulti before the panel
+    # loop. The resolver's surviving-cell cache fills here, and each
+    # per-child getter chain in the loop below pulls only the slice
+    # belonging to its sample.
+    #
+    # `space` has to be applied HERE rather than forwarded to the panel
+    # call: `materialize()` on a multi hands each child the recipe scoped
+    # to its own name (`space_obj[samp]`), which is the only place the
+    # sample identity needed to pick a per-sample step is still known. A
+    # panel child is a plain `giotto` and has no name to resolve against.
+    if (!is.null(view) || !is.null(space)) {
+        gobject <- GiottoClass::materialize(gobject, view, space = space)
         # selectSamples in `view` may have narrowed children; reconcile
         # `samples` to the survivors. If a caller-supplied sample didn't
         # survive view narrowing, that's an error (silent drop is too
@@ -93,7 +105,7 @@ NULL
         a <- named
         a$gobject <- .gg_build_panel_child(gobject, s)
         a$view <- NULL    # already applied
-        a$space <- NULL   # single-sample below
+        a$space <- NULL   # already applied, per child, above
         a$samples <- NULL # consumed by dispatcher
         if (has_title) {
             a$title <- if (is.null(base_title) ||
@@ -148,33 +160,52 @@ NULL
 # Resolve which samples the panel loop iterates over.
 #
 # - `samples = NULL` and no `space`        -> all children
-# - `samples = NULL` and `space = "name"`  -> derive from space@samples keys
-#                                              (auto-injection convention)
-# - `samples = ":all:"`                    -> all children (explicit form)
+# - `samples = NULL` and a combinedSpace   -> that space's members
+# - `samples = NULL` and a perSampleSpace  -> all children
+# - `samples = ":all:"`                    -> as the NULL cases above
 # - `samples = c("A","B")`                 -> those samples; must exist on
-#                                              gmulti, and if `space` is
-#                                              non-NULL, must intersect
-#                                              names(space@samples)
+#                                              the gmulti, and must be
+#                                              members of a combinedSpace
+#                                              if one was named
 #
 # All resolved sample names must be in `child_names` (i.e. real
 # `@objects` keys). Defined-space names that overlap with sample names
 # trigger no special handling here — the user is unambiguous because
 # this arg is `samples`, not `space`.
+#
+# Why the two space kinds differ. A `combinedSpace` lays its members out
+# relative to one another in one coordinate system, so its membership is
+# CLOSED and declared: a sample outside the layout has no position in the
+# frame, and drawing it would put an untransformed panel beside
+# transformed ones. A `perSampleSpace` is OPEN by design — an unscoped
+# step means "whatever sample it meets" — so `names()` on it lists the
+# samples the recipe happens to mention, not the samples it covers.
+# Deriving a panel set from that would silently drop children the space
+# applies to perfectly well.
+#
+# This is narrower than §10.8's rule for artifact generators, where an
+# explicit `samples =` may never escape the space at all. A panel set is
+# not an artifact: nothing is persisted under a name that would later
+# read as covering more than it does, and the scope is visible in the
+# call that produced the figure. So the constraint is applied only where
+# the frame itself makes an outside sample meaningless.
 #' @keywords internal
 #' @noRd
 .resolve_samples <- function(gobject, samples, space, child_names) {
-    # Derive defaults from a defined space's sample keys when given.
+    # A named space that does not exist is an error, not a fallback to
+    # "all children in the native frame" — `giottoSpace()` is the one
+    # place a space name is checked and it diagnoses a name that is
+    # really a sample or a group.
     space_samples <- NULL
-    if (!is.null(space)) {
-        if (is.character(space) && length(space) == 1L) {
-            space_obj <- tryCatch(
-                GiottoClass::giottoSpace(gobject, space),
-                error = function(e) NULL)
-            if (!is.null(space_obj)) {
-                space_samples <- tryCatch(
-                    names(slot(space_obj, "samples")),
-                    error = function(e) NULL)
-            }
+    if (is.character(space) && length(space) == 1L) {
+        space_obj <- GiottoClass::giottoSpace(gobject, space)
+        if (inherits(space_obj, "combinedSpace")) {
+            # `names()` on a space IS its membership. The `@samples` slot
+            # this used to read no longer exists; the read sat inside a
+            # `tryCatch` that swallowed the error, so the space silently
+            # constrained nothing.
+            space_samples <- names(space_obj)
+            if (length(space_samples) == 0L) space_samples <- NULL
         }
     }
 

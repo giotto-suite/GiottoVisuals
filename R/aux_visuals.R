@@ -6,15 +6,15 @@ NULL
 
 # Thin wrapper around `GiottoClass::materialize()` for plot functions.
 #
-# Why this helper exists (don't inline it back):
-# `GiottoClass::materialize()` dispatches on `signature(giotto,
-# giottoView)` / `(giotto, character)` / multi variants — there is no
-# method for `view = NULL`. Calling `materialize(g, NULL, NULL)` would
-# error with "no applicable method". Plot functions need to accept
-# `view = NULL` / `space = NULL` as the default (so callers without a
-# view see normal behavior), so each call site would otherwise need an
-# inline `if (!is.null(view) || !is.null(space)) ...` guard. This
-# helper folds that guard into one place.
+# Why this helper exists (don't inline it back): plot functions take
+# `view = NULL` / `space = NULL` as their default, so every call site
+# would otherwise carry the same `if (!is.null(view) || !is.null(space))`
+# guard. This folds it into one place.
+#
+# `materialize()` does have a `view = NULL` method now, so the guard is
+# no longer load-bearing for dispatch — it is an early return that keeps
+# a plot with neither knob set from paying for a resolver pass that
+# narrows nothing.
 #
 # `slots` is a character vector of the slot names this plot reads —
 # see [GiottoClass::materialize()] for the canonical set. The resolver
@@ -30,19 +30,32 @@ NULL
 #' @noRd
 .gg_materialize <- function(gobject, view, space, slots) {
     if (is.null(view) && is.null(space)) return(gobject)
+    # Same contract GiottoClass's getters enforce: a name, never an
+    # inline recipe. Asserted rather than left to dispatch so the caller
+    # is told what is wrong instead of "unable to find an inherited
+    # method for materialize".
+    if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
+    if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
     GiottoClass::materialize(gobject, view, space = space, slots = slots)
 }
 
 
-# Class guard for plot functions: single-sample `giotto` only in v1.
+# Class guard: this body handles ONE sample.
 #
-# Why this helper exists: plot functions currently assert
-# `inherits(gobject, "giotto")` via checkmate, which produces an
-# unhelpful "Must inherit from class 'giotto'" error when the caller
-# passes a `giottoMulti` (a sibling class — both extend `gAny` but
-# `giottoMulti` does NOT inherit from `giotto`). Multi-sample plot
-# dispatch is a planned polish item; until it lands, surface a clear
-# error that points to the documented workaround.
+# Why the giottoMulti branch is spelled out rather than left to
+# checkmate: `giottoMulti` is a sibling of `giotto`, not a subclass —
+# both extend `gAny` — so a plain `assert_class(gobject, "giotto")`
+# reports "Must inherit from class 'giotto'", which reads as a type
+# error rather than as the dispatch that was missed.
+#
+# No public plot function can reach that branch any more: the spatial
+# ones return through `.gg_multi_dispatch_spatial()` above their guard,
+# and the non-spatial and dim-reduction ones dropped the guard entirely
+# once their getters became gmulti-aware. What is left is an invariant
+# on the single-sample internals (`.spatPlot2D_single`,
+# `.dimPlot2D_single`) — reaching it means a caller in THIS package
+# skipped its dispatch, so the message names that rather than telling a
+# user a feature is missing.
 #
 # Picks the calling function's name out of the call stack so the same
 # helper can be dropped in wherever `checkmate::assert_class(gobject,
@@ -58,12 +71,12 @@ NULL
         )
         fn_name <- caller[[length(caller)]]  # strip pkg:: prefix if any
         stop(sprintf(paste(
-            "[%s] giottoMulti is not yet supported by this plot function.",
-            "Materialize and plot each child individually:",
-            "    out <- GiottoClass::materialize(mg, view, space)",
-            "    %s(out@objects[[<sample_name>]], ...)",
-            sep = "\n"
-        ), fn_name, fn_name), call. = FALSE)
+            "[%s] reached with a giottoMulti; this body draws one sample.",
+            "Multi-sample plotting goes through the dispatcher, so this is",
+            "a missed dispatch in GiottoVisuals rather than something to",
+            "work around at the call site -- please report it.",
+            sep = " "
+        ), fn_name), call. = FALSE)
     }
     checkmate::assert_class(gobject, "giotto")
 }

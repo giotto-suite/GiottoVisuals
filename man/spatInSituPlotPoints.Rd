@@ -58,6 +58,7 @@ spatInSituPlotPoints(
   verbose = TRUE,
   view = NULL,
   space = NULL,
+  samples = NULL,
   ...
 )
 }
@@ -174,9 +175,11 @@ change save_name in save_param}
 
 \item{verbose}{be verbose}
 
-\item{view, space}{optional \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} /
-\link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace} or the name of one slotted on
-\code{gobject}. When supplied, \code{gobject} is pre-narrowed via
+\item{view, space}{optional character(1) name of a
+\link[GiottoClass:giottoView-class]{GiottoClass::giottoView} / \link[GiottoClass:giottoSpace-class]{GiottoClass::giottoSpace}
+slotted on \code{gobject}. A recipe object is not accepted — it has no
+name, so nothing downstream could say which frame a result was
+computed in. When supplied, \code{gobject} is pre-narrowed via
 \code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} before any sub-layer fetches its data.
 One resolver pass is shared across the polygon / point / image
 helpers. Backend-agnostic: in-mem and on-disk gobjects take the
