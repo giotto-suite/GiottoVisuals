@@ -5,6 +5,18 @@
 - spatial plot functions take a `giottoMulti` and draw one panel per sample, composed with `cowplot::plot_grid()`. `samples` selects which children to draw; `":all:"` is the explicit form of the default.
 - non-spatial and dim-reduction plots (`dotPlot()`, `violinPlot()`, `ridgePlot()`, `plotHeatmap()`, `plotMetaDataHeatmap()`, `showClusterHeatmap()`, `showClusterDendrogram()`, `dimPlot2D()`, `plotUMAP()`, `plotTSNE()`, `plotPCA()`) accept a `giottoMulti` directly, pooling cells across samples. Their getters already returned joint subobjects; only the class guard was rejecting them.
 - `plot_output_handler()` accepts a `giottoMulti` as well as a `giotto`.
+- `plotClusterTree()` draws an annotated cluster tree: the dendrogram, a
+  coarse-to-fine ladder of one band per `k`, and per-cluster tracks for size
+  and detection margin. The ladder is the point -- it shows how labels merge as
+  the tree is cut more coarsely, which is what a reader needs to decide at what
+  level to annotate. Labels resolve exactly as
+  `Giotto::annotateClusterTree()` resolves them, so the figure and the columns
+  written onto the object cannot disagree.
+- `showClusterDendrogram()` gains `tree`, for plotting an `hclust` you already
+  have -- typically from `Giotto::calculateClusterTree()` -- instead of
+  rebuilding one from the expression values. One tree can then back the plot,
+  the splits and any per-node analysis, rather than each rebuilding its own and
+  being free to disagree. `view` / `space` are honoured either way.
 
 ## bug fixes
 - `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now attached by `GiottoClass::annotateSpatialNetwork()` at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.

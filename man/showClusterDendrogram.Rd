@@ -20,6 +20,7 @@ showClusterDendrogram(
   save_plot = NULL,
   save_param = list(),
   default_save_name = "showClusterDendrogram",
+  tree = NULL,
   view = NULL,
   space = NULL,
   ...
@@ -61,6 +62,10 @@ see \code{\link{showSaveParameters}}}
 
 \item{default_save_name}{default save name for saving, don't change,
 change save_name in save_param}
+
+\item{tree}{optional \code{hclust} from \code{Giotto::calculateClusterTree()}. When
+supplied the tree is plotted as given rather than rebuilt, so the same tree
+can back the plot, the splits and any per-node analysis.}
 
 \item{view}{character. Name of a \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} slotted on
 \code{gobject}. When supplied, the object is narrowed through
