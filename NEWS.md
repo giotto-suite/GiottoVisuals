@@ -5,6 +5,13 @@
 - spatial plot functions take a `giottoMulti` and draw one panel per sample, composed with `cowplot::plot_grid()`. `samples` selects which children to draw; `":all:"` is the explicit form of the default.
 - non-spatial and dim-reduction plots (`dotPlot()`, `violinPlot()`, `ridgePlot()`, `plotHeatmap()`, `plotMetaDataHeatmap()`, `showClusterHeatmap()`, `showClusterDendrogram()`, `dimPlot2D()`, `plotUMAP()`, `plotTSNE()`, `plotPCA()`) accept a `giottoMulti` directly, pooling cells across samples. Their getters already returned joint subobjects; only the class guard was rejecting them.
 - `plot_output_handler()` accepts a `giottoMulti` as well as a `giotto`.
+- `plotClusterTree()` draws an annotated cluster tree: the dendrogram, a
+  coarse-to-fine ladder of one band per `k`, and per-cluster tracks for size
+  and detection margin. The ladder is the point -- it shows how labels merge as
+  the tree is cut more coarsely, which is what a reader needs to decide at what
+  level to annotate. Labels resolve exactly as
+  `Giotto::annotateClusterTree()` resolves them, so the figure and the columns
+  written onto the object cannot disagree.
 - `showClusterDendrogram()` gains `tree`, for plotting an `hclust` you already
   have -- typically from `Giotto::calculateClusterTree()` -- instead of
   rebuilding one from the expression values. One tree can then back the plot,
