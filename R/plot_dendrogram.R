@@ -14,6 +14,9 @@
 #' @param h height of horizontal lines to plot
 #' @param h_color color of horizontal lines
 #' @param rotate rotate dendrogram 90 degrees
+#' @param tree optional `hclust` from `Giotto::calculateClusterTree()`. When
+#' supplied the tree is plotted as given rather than rebuilt, so the same tree
+#' can back the plot, the splits and any per-node analysis.
 #' @inheritParams gmulti_params
 #' @inheritDotParams ggdendro::ggdendrogram
 #' @details Expression correlation dendrogram for selected clusters.
@@ -38,6 +41,7 @@ showClusterDendrogram <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "showClusterDendrogram",
+    tree = NULL,
     view = NULL,
     space = NULL,
     ...) {
@@ -45,6 +49,34 @@ showClusterDendrogram <- function(gobject,
     package_check(pkg_name = "ggdendro", repository = "CRAN")
     gobject <- .gg_materialize(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
+
+    # A tree from `Giotto::calculateClusterTree()` can back the dendrogram, the
+    # splits and any per-node analysis at once, instead of each rebuilding its
+    # own from the expression values and being free to disagree. It also owns
+    # the cluster ordering the correlation depends on.
+    #
+    # Placed after `.gg_materialize()`, not before it: `gobject` still reaches
+    # `plot_output_handler()` below, so `view` / `space` and a `giottoMulti`
+    # behave the same whether or not a tree was supplied.
+    if (!is.null(tree)) {
+        if (!inherits(tree, "hclust")) {
+            stop("[showClusterDendrogram] `tree` must be an `hclust`, as ",
+                "returned by `Giotto::calculateClusterTree()`. Got: ",
+                paste(class(tree), collapse = "/"), ".", call. = FALSE)
+        }
+        pl <- ggdendro::ggdendrogram(
+            data = stats::as.dendrogram(tree), rotate = rotate, ...
+        )
+        if (!is.null(h)) {
+            pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
+        }
+        return(plot_output_handler(
+            gobject = gobject, plot_object = pl, save_plot = save_plot,
+            return_plot = return_plot, show_plot = show_plot,
+            default_save_name = default_save_name, save_param = save_param,
+            else_return = NULL
+        ))
+    }
 
     values <- match.arg(
         expression_values,
