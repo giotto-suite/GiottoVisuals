@@ -27,7 +27,7 @@ A plot function moves through four layers, top to bottom:
 | Layer | Where | Responsibility |
 |-------|-------|----------------|
 | Entry | `vis_spatial_gg.R`, `vis_spatial_in_situ.R`, `vis_spatial_plotly.R`, `plot_*.R` | User-facing function, argument defaults, orchestration |
-| Data input | `GiottoClass` getters, `spatValues()`, `combine*Data()`, `.gg_materialize()` | Pull values out of the gobject into a `data.table` |
+| Data input | `GiottoClass` getters, `spatValues()`, `combine*Data()`, `.gg_resolve()` | Pull values out of the gobject into a `data.table` |
 | Render | `gg_info_layers.R`, `gg_param.R`, `aux_defaults.R`, `color_palettes.R` | Turn a table plus params into ggplot layers |
 | Output | `aux_output.R`, `aux_save.R` | Show / save / return, per `giottoInstructions` |
 
@@ -59,7 +59,7 @@ preference for new code:
    and what follows from it — live coordinates, an inner join, and nodes coming
    from the locations rather than the edges — are in GiottoClass's design
    article under Networks, and in ADR 0004.
-4. **`.gg_materialize()`** — not a fetch. A pre-narrow applied before any of the
+4. **`.gg_resolve()`** — not a fetch. A pre-narrow applied before any of the
    above (see [View / space pre-narrow](#view-space-pre-narrow)).
 
 All of them return eagerly. `spatValues()` and the `combine*` functions return
@@ -89,39 +89,45 @@ branch at the call site. Feature-value collection in `spatFeatPlot2D_single()`,
 
 ### View / space pre-narrow {#view-space-pre-narrow}
 
-Plot functions that accept `view` / `space` call `.gg_materialize()` as their
+Plot functions that accept `view` / `space` call `.gg_resolve()` as their
 first statement, before any defaults are resolved or data is fetched.
 
 ```r
-gobject <- .gg_materialize(gobject, view, space,
+gobject <- .gg_resolve(gobject, view, space,
     slots = c("cell_metadata", "expression", "spatial_enrichment"))
 ```
 
 `slots` names the slots that plot reads, from the canonical set in
-`GiottoClass::materialize()`. The resolver runs **once** for the listed slots,
+`GiottoClass::resolve()`. The resolver runs **once** for the listed slots,
 so the predicate or crop is evaluated a single time no matter how many
 `combine*` / getter calls the plot body then makes.
 
-`.gg_materialize()` exists as a helper rather than an inline call because
+`.gg_resolve()` exists as a helper rather than an inline call because
 `view = NULL` has to be the default, so that callers without a view see normal
 behavior, and every call site would otherwise carry its own
 `if (!is.null(view) || !is.null(space))` guard. The helper folds that guard into
-one place — do not inline it back. The guard is an early return, not a dispatch
-workaround: `materialize()` has `view = "NULL"` methods for both `giotto` and
-`giottoMulti`, and the guard only keeps a plot with neither knob set from paying
-for a resolver pass that narrows nothing.
+one place — do not inline it back. The guard is an early return and nothing
+more: `resolve()` takes `view` as a named argument defaulting to `NULL`, so a
+plot with neither knob set would resolve correctly anyway; the guard only keeps
+it from paying for a pass that narrows nothing.
 
-What `materialize()` has no method for is a **recipe object** — it dispatches on
-`signature(giotto, character)` and `(giotto, "NULL")`, never on `giottoView`.
-That is the contract, not an omission: a view or space is passed by name so that
-a result can say which one produced it. `.gg_materialize()` asserts it with
-`checkmate::assert_string()` rather than letting it surface as "unable to find an
-inherited method".
+What `resolve()` does not accept is a **recipe object** — `view` is a
+`character(1)` naming something slotted on the gobject. That is the contract,
+not an omission: a view or space is passed by name so that a result can say
+which one produced it. `.gg_resolve()` asserts it with
+`checkmate::assert_string()` rather than letting it surface as a dispatch
+error.
 
-It is backend-agnostic by construction: `materialize()` selects
+It is backend-agnostic by construction: `resolve()` selects
 `dataTableCoordinator` for in-memory gobjects and `parquetCoordinator` for
 `gsource`-backed ones via `.default_view_coordinator()`. Nothing in
 GiottoVisuals chooses.
+
+Before GiottoClass 0.7.2 this was `materialize()`, and the helper was named
+after it. The rename went with the merge of `materialize()` and
+`resolveSubobject()` into one `resolve()` generic; `materialize` was already
+in use elsewhere in the suite for pulling backed data into memory, which is
+the one thing this does not do.
 
 #### The in-situ window is also a view
 
@@ -170,7 +176,7 @@ could serve those columns natively.
 GiottoVisuals. GiottoVisuals imports only GiottoUtils and GiottoClass and must
 stay that way. Any behavior that has to differ by carrier is expressed as a
 generic in GiottoClass with an in-memory default method, and implemented for
-stores in GiottoDisk. `.gg_materialize()` is the model: one call, no branch,
+stores in GiottoDisk. `.gg_resolve()` is the model: one call, no branch,
 the right coordinator chosen below.
 
 ## Render
@@ -327,7 +333,7 @@ top-level `title`.
 **`view` and `space` are applied once on the multi, before the panel loop**, so
 the resolver's surviving-cell cache fills a single time and each per-child
 getter chain pulls only its own slice. `space` in particular *has* to be applied
-there rather than forwarded to the per-panel call: `materialize()` hands each
+there rather than forwarded to the per-panel call: `resolve()` hands each
 child the recipe scoped to its own name (`space_obj[samp]`), and that is the
 last point at which the sample identity needed to pick a per-sample step still
 exists. A panel child is a plain `giotto` with no name to resolve against.

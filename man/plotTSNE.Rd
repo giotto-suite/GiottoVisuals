@@ -79,7 +79,7 @@ cell_color parameter}
     \item{\code{axis_title}}{size of axis title}
     \item{\code{view}}{character. Name of a \link[GiottoClass:giottoView-class]{GiottoClass::giottoView} slotted on
 \code{gobject}. When supplied, the object is narrowed through
-\code{\link[GiottoClass:materialize]{GiottoClass::materialize()}} once before any data is fetched, so every slot
+\code{\link[GiottoClass:resolve]{GiottoClass::resolve()}} once before any data is fetched, so every slot
 read in the plot shares one resolver pass. A recipe object is not accepted —
 it has no name, so nothing downstream could say which view a figure came
 from.}

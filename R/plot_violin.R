@@ -46,7 +46,7 @@ violinPlot <- function(gobject,
     default_save_name = "violinPlot",
     view = NULL,
     space = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(

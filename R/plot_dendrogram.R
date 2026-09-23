@@ -47,7 +47,7 @@ showClusterDendrogram <- function(gobject,
     ...) {
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
 
     # A tree from `Giotto::calculateClusterTree()` can back the dendrogram, the

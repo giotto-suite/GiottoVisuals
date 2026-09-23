@@ -4,27 +4,27 @@ NULL
 
 # view / space pre-narrow ####
 
-# Thin wrapper around `GiottoClass::materialize()` for plot functions.
+# Thin wrapper around `GiottoClass::resolve()` for plot functions.
 # Do not inline it back — it folds the `view = NULL` guard that every
 # call site would otherwise carry into one place.
 #
 # `slots` is a character vector of the slot names this plot reads; see
-# [GiottoClass::materialize()] for the canonical set.
+# [GiottoClass::resolve()] for the canonical set.
 #
 # Why the guard is needed, and why this stays backend-agnostic: see
 # "View / space pre-narrow" in vignettes/articles/design.Rmd.
 #
 #' @keywords internal
 #' @noRd
-.gg_materialize <- function(gobject, view, space, slots) {
+.gg_resolve <- function(gobject, view, space, slots) {
     if (is.null(view) && is.null(space)) return(gobject)
     # Same contract GiottoClass's getters enforce: a name, never an
     # inline recipe. Asserted rather than left to dispatch so the caller
     # is told what is wrong instead of "unable to find an inherited
-    # method for materialize".
+    # method for resolve".
     if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
     if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
-    GiottoClass::materialize(gobject, view, space = space, slots = slots)
+    GiottoClass::resolve(gobject, view = view, space = space, slots = slots)
 }
 
 

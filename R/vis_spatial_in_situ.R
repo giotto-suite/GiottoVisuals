@@ -194,7 +194,7 @@ spatInSituPlotPoints <- function(
 
     # Pre-narrow once for the slots this plot reads (polygons, points,
     # locations, enrichment, expression-for-fill, metadata, images).
-    gobject <- .gg_materialize(.win$gobject, .win$view, space,
+    gobject <- .gg_resolve(.win$gobject, .win$view, space,
         slots = c("cell_metadata", "spatial_info", "spatial_locs",
             "spatial_enrichment", "feat_info", "feat_metadata",
             "expression", "images"))
@@ -791,7 +791,7 @@ spatInSituPlotHex <- function(gobject,
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_info", "spatial_locs",
             "feat_info", "feat_metadata", "images"))
     # deprecate
@@ -1074,7 +1074,7 @@ spatInSituPlotDensity <- function(gobject,
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("spatial_info", "spatial_locs",
             "feat_info", "feat_metadata", "images"))
     # deprecate

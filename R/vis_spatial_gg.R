@@ -585,7 +585,7 @@ spatPlot2D <- function(
     .gg_assert_giotto_single(gobject)
 
     # Pre-narrow once for the slots this plot reads.
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
             "images"))
@@ -951,7 +951,7 @@ spatDeconvPlot <- function(
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
     # check for installed packages
@@ -1571,7 +1571,7 @@ dimPlot2D <- function(
     # slot (PCA / UMAP / TSNE run on the assembled expression matrix);
     # getDimReduction(mg, ...) returns that single joint embedding and
     # downstream getters return joint subobjects. No per-sample loop.
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
 
@@ -2154,7 +2154,7 @@ spatDimPlot2D <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
             "images"))
@@ -2480,7 +2480,7 @@ spatFeatPlot2D_single <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
     # data.table variables
@@ -3082,7 +3082,7 @@ spatFeatPlot2D <- function(
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
     # deprecation message
@@ -3593,7 +3593,7 @@ dimFeatPlot2D <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
 
@@ -3964,7 +3964,7 @@ spatDimFeatPlot2D <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
             "images"))
@@ -4218,7 +4218,7 @@ spatCellPlot2D <- function(
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "images"))
     # Set feat_type and spat_unit
@@ -4443,7 +4443,7 @@ dimCellPlot2D <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"))
     # Set feat_type and spat_unit
@@ -4728,7 +4728,7 @@ spatDimCellPlot2D <- function(
         view = NULL,
         space = NULL,
         samples = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
             "images"))

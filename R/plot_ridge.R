@@ -80,7 +80,7 @@ ridgePlot <- function(gobject, feats, ...,
     verbose = NULL,
     view = NULL,
     space = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression",
             "spatial_enrichment", "dimension_reduction"))
     value <- NULL # NSE vars

@@ -232,7 +232,7 @@ NULL
 #' @name gmulti_params
 #' @param view character. Name of a [GiottoClass::giottoView-class] slotted on
 #' `gobject`. When supplied, the object is narrowed through
-#' [GiottoClass::materialize()] once before any data is fetched, so every slot
+#' [GiottoClass::resolve()] once before any data is fetched, so every slot
 #' read in the plot shares one resolver pass. A recipe object is not accepted —
 #' it has no name, so nothing downstream could say which view a figure came
 #' from.

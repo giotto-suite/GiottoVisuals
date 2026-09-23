@@ -39,7 +39,7 @@ showClusterHeatmap <- function(gobject,
     ...) {
     # package Check
     package_check(pkg_name = "ComplexHeatmap", repository = "Bioc")
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
 
     # Set feat_type and spat_unit
@@ -189,7 +189,7 @@ plotHeatmap <- function(gobject,
     default_save_name = "plotHeatmap",
     view = NULL,
     space = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
     # deprecate
     if (GiottoUtils::is_present(gradient_colors)) {
@@ -497,7 +497,7 @@ plotMetaDataHeatmap <- function(
         default_save_name = "plotMetaDataHeatmap",
         view = NULL,
         space = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
     # deprecate
     if (GiottoUtils::is_present(plot_title)) {
@@ -891,7 +891,7 @@ plotMetaDataCellsHeatmap <- function(gobject,
     default_save_name = "plotMetaDataCellsHeatmap",
     view = NULL,
     space = NULL) {
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression", "spatial_enrichment"))
     # deprecate
     if (GiottoUtils::is_present(midpoint)) {
