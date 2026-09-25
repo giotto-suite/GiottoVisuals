@@ -245,10 +245,11 @@ setMethod(
 # Pull sampled values from original image into target spatial mapping
 # Returns a `giottoLargeImage`
 .sample_gimage <- function(x, size) {
+    # "display" lets GDAL read from overviews when present. "regular" ignores
+    # them and costs ~2s per call on a JPEG-2000 VRT.
     x[] <- terra::spatSample(x[],
         size = size,
-        method = "regular",
-        as.raster = TRUE
+        method = "display"
     )
     return(x)
 }
