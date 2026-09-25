@@ -75,7 +75,7 @@ NULL
     # panel child is a plain `giotto` and has no name to resolve against.
     if (!is.null(view) || !is.null(space)) {
         gobject <- GiottoClass::materialize(gobject, view, space = space)
-        # selectSamples in `view` may have narrowed children; reconcile
+        # a sample step in `view` may have narrowed children; reconcile
         # `samples` to the survivors. If a caller-supplied sample didn't
         # survive view narrowing, that's an error (silent drop is too
         # subtle).
