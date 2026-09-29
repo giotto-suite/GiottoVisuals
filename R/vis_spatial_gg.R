@@ -325,7 +325,7 @@
     ## plot point layer
     point_general_params <- list(
         ggobject = pl,
-        ext = ext(gobject, prefer = "spatlocs"),
+        ext = ext(gobject, spat_unit = spat_unit, prefer = "spatlocs"),
         instrs = instructions(gobject),
         sdimx = sdimx,
         sdimy = sdimy,
@@ -588,7 +588,8 @@ spatPlot2D <- function(
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
-            "images"))
+            "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
 
     # deprecation message
     if (!is.null(largeImage_name)) {
@@ -953,7 +954,8 @@ spatDeconvPlot <- function(
     .gg_assert_giotto_single(gobject)
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
-            "spatial_enrichment", "expression", "images"))
+            "spatial_enrichment", "expression", "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # check for installed packages
     package_check(pkg_name = "scatterpie", repository = "CRAN")
 
@@ -1573,7 +1575,8 @@ dimPlot2D <- function(
     # downstream getters return joint subobjects. No per-sample loop.
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
-            "spatial_enrichment", "expression"))
+            "spatial_enrichment", "expression"),
+        spat_unit = spat_unit, feat_type = feat_type)
 
     handle_errors({
         ## check group_by
@@ -2157,7 +2160,8 @@ spatDimPlot2D <- function(
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
-            "images"))
+            "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -2482,7 +2486,8 @@ spatFeatPlot2D_single <- function(
         samples = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
-            "spatial_enrichment", "expression", "images"))
+            "spatial_enrichment", "expression", "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # data.table variables
     cell_ID <- NULL
 
@@ -2782,7 +2787,8 @@ spatFeatPlot2D_single <- function(
                     points_aes$colour <- as.name(feat)
 
                     points_args$shape <- 19
-                    points_args$ext <- ext(gobject, prefer = "spatlocs")
+                    points_args$ext <- ext(gobject, spat_unit = spat_unit,
+                        prefer = "spatlocs")
                     scale_type <- "color"
                 }
             )
@@ -3084,7 +3090,8 @@ spatFeatPlot2D <- function(
     .gg_assert_giotto_single(gobject)
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
-            "spatial_enrichment", "expression", "images"))
+            "spatial_enrichment", "expression", "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # deprecation message
     if (!is.null(largeImage_name)) {
         deprecate_warn(
@@ -3595,7 +3602,8 @@ dimFeatPlot2D <- function(
         samples = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
-            "spatial_enrichment", "expression"))
+            "spatial_enrichment", "expression"),
+        spat_unit = spat_unit, feat_type = feat_type)
 
     handle_errors({
         # print, return and save parameters
@@ -3967,7 +3975,8 @@ spatDimFeatPlot2D <- function(
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
-            "images"))
+            "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )
@@ -4220,7 +4229,8 @@ spatCellPlot2D <- function(
     .gg_assert_giotto_single(gobject)
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
-            "spatial_enrichment", "expression", "images"))
+            "spatial_enrichment", "expression", "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4445,7 +4455,8 @@ dimCellPlot2D <- function(
         samples = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "dimension_reduction",
-            "spatial_enrichment", "expression"))
+            "spatial_enrichment", "expression"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
         gobject = gobject,
@@ -4731,7 +4742,8 @@ spatDimCellPlot2D <- function(
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_locs",
             "spatial_enrichment", "expression", "dimension_reduction",
-            "images"))
+            "images"),
+        spat_unit = spat_unit, feat_type = feat_type)
     plot_alignment <- match.arg(plot_alignment,
         choices = c("vertical", "horizontal")
     )

@@ -40,7 +40,8 @@ showClusterHeatmap <- function(gobject,
     # package Check
     package_check(pkg_name = "ComplexHeatmap", repository = "Bioc")
     gobject <- .gg_resolve(gobject, view, space,
-        slots = c("cell_metadata", "expression", "spatial_enrichment"))
+        slots = c("cell_metadata", "expression", "spatial_enrichment"),
+        spat_unit = spat_unit, feat_type = feat_type)
 
     # Set feat_type and spat_unit
     spat_unit <- set_default_spat_unit(
@@ -190,7 +191,8 @@ plotHeatmap <- function(gobject,
     view = NULL,
     space = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
-        slots = c("cell_metadata", "expression", "spatial_enrichment"))
+        slots = c("cell_metadata", "expression", "spatial_enrichment"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
     if (GiottoUtils::is_present(gradient_colors)) {
         deprecate_warn(
@@ -498,7 +500,8 @@ plotMetaDataHeatmap <- function(
         view = NULL,
         space = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
-        slots = c("cell_metadata", "expression", "spatial_enrichment"))
+        slots = c("cell_metadata", "expression", "spatial_enrichment"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
     if (GiottoUtils::is_present(plot_title)) {
         deprecate_warn(
@@ -892,7 +895,8 @@ plotMetaDataCellsHeatmap <- function(gobject,
     view = NULL,
     space = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
-        slots = c("cell_metadata", "expression", "spatial_enrichment"))
+        slots = c("cell_metadata", "expression", "spatial_enrichment"),
+        spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
     if (GiottoUtils::is_present(midpoint)) {
         deprecate_warn(

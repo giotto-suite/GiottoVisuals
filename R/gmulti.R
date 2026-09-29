@@ -69,12 +69,16 @@ NULL
     # belonging to its sample.
     #
     # `space` has to be applied HERE rather than forwarded to the panel
-    # call: `resolve()` on a multi hands each child the recipe scoped
+    # call: `resolveRecipe()` on a multi hands each child the recipe scoped
     # to its own name (`space_obj[samp]`), which is the only place the
     # sample identity needed to pick a per-sample step is still known. A
     # panel child is a plain `giotto` and has no name to resolve against.
     if (!is.null(view) || !is.null(space)) {
-        gobject <- GiottoClass::resolveRecipe(gobject, view = view, space = space)
+        # scoped to the plot's own spat_unit / feat_type: a resolve op
+        # narrows only the scope it is asked about
+        gobject <- GiottoClass::resolveRecipe(gobject, view = view,
+            space = space, spat_unit = named$spat_unit,
+            feat_type = named$feat_type)
         # a sample step in `view` may have narrowed children; reconcile
         # `samples` to the survivors. If a caller-supplied sample didn't
         # survive view narrowing, that's an error (silent drop is too

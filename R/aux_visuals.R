@@ -4,19 +4,22 @@ NULL
 
 # view / space pre-narrow ####
 
-# Thin wrapper around `GiottoClass::resolve()` for plot functions.
+# Thin wrapper around `GiottoClass::resolveRecipe()` for plot functions.
 # Do not inline it back — it folds the `view = NULL` guard that every
 # call site would otherwise carry into one place.
 #
 # `slots` is a character vector of the slot names this plot reads; see
-# [GiottoClass::resolve()] for the canonical set.
+# [GiottoClass::resolveRecipe()] for the canonical set. `spat_unit` /
+# `feat_type` are the plot's own: a resolve op narrows only that scope, so a
+# plot must pass what it reads and read only what it passed.
 #
 # Why the guard is needed, and why this stays backend-agnostic: see
 # "View / space pre-narrow" in vignettes/articles/design.Rmd.
 #
 #' @keywords internal
 #' @noRd
-.gg_resolve <- function(gobject, view, space, slots) {
+.gg_resolve <- function(gobject, view, space, slots, spat_unit = NULL,
+                        feat_type = NULL) {
     if (is.null(view) && is.null(space)) return(gobject)
     # Same contract GiottoClass's getters enforce: a name, never an
     # inline recipe. Asserted rather than left to dispatch so the caller
@@ -24,7 +27,8 @@ NULL
     # method for resolve".
     if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
     if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
-    GiottoClass::resolve(gobject, view = view, space = space, slots = slots)
+    GiottoClass::resolveRecipe(gobject, view = view, space = space,
+        slots = slots, spat_unit = spat_unit, feat_type = feat_type)
 }
 
 

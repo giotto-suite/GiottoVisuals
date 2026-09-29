@@ -98,7 +98,7 @@ gobject <- .gg_resolve(gobject, view, space,
 ```
 
 `slots` names the slots that plot reads, from the canonical set in
-`GiottoClass::resolve()`. The resolver runs **once** for the listed slots,
+`GiottoClass::resolveRecipe()`. The resolver runs **once** for the listed slots,
 so the predicate or crop is evaluated a single time no matter how many
 `combine*` / getter calls the plot body then makes.
 
@@ -107,25 +107,33 @@ so the predicate or crop is evaluated a single time no matter how many
 behavior, and every call site would otherwise carry its own
 `if (!is.null(view) || !is.null(space))` guard. The helper folds that guard into
 one place — do not inline it back. The guard is an early return and nothing
-more: `resolve()` takes `view` as a named argument defaulting to `NULL`, so a
+more: `resolveRecipe()` takes `view` as a named argument defaulting to `NULL`, so a
 plot with neither knob set would resolve correctly anyway; the guard only keeps
 it from paying for a pass that narrows nothing.
 
-What `resolve()` does not accept is a **recipe object** — `view` is a
+What `resolveRecipe()` does not accept is a **recipe object** — `view` is a
 `character(1)` naming something slotted on the gobject. That is the contract,
 not an omission: a view or space is passed by name so that a result can say
 which one produced it. `.gg_resolve()` asserts it with
 `checkmate::assert_string()` rather than letting it surface as a dispatch
 error.
 
-It is backend-agnostic by construction: `resolve()` selects
+It is backend-agnostic by construction: `resolveRecipe()` selects
 `dataTableCoordinator` for in-memory gobjects and `parquetCoordinator` for
 `gsource`-backed ones via `.default_view_coordinator()`. Nothing in
 GiottoVisuals chooses.
 
-Before GiottoClass 0.7.2 this was `materialize()`, and the helper was named
+A resolve op is scoped to one `spat_unit` and `feat_type`, and narrows only
+that scope; other units come back untouched, not narrowed to match. So every
+call passes the plot's own `spat_unit` / `feat_type`, and the plot body reads
+only that scope back — which is why the point layer takes its extent from
+`ext(gobject, spat_unit = spat_unit)` rather than from every unit's locations.
+An extent unioned across units picked up a unit the view never narrowed, or
+one it had narrowed to nothing, which terra rejects as an invalid extent.
+
+Before GiottoClass 0.7.3 this was `materialize()`, and the helper was named
 after it. The rename went with the merge of `materialize()` and
-`resolveSubobject()` into one `resolve()` generic; `materialize` was already
+`resolveSubobject()` into one `resolveRecipe()` generic; `materialize` was already
 in use elsewhere in the suite for pulling backed data into memory, which is
 the one thing this does not do.
 
@@ -333,7 +341,7 @@ top-level `title`.
 **`view` and `space` are applied once on the multi, before the panel loop**, so
 the resolver's surviving-cell cache fills a single time and each per-child
 getter chain pulls only its own slice. `space` in particular *has* to be applied
-there rather than forwarded to the per-panel call: `resolve()` hands each
+there rather than forwarded to the per-panel call: `resolveRecipe()` hands each
 child the recipe scoped to its own name (`space_obj[samp]`), and that is the
 last point at which the sample identity needed to pick a per-sample step still
 exists. A panel child is a plain `giotto` with no name to resolve against.

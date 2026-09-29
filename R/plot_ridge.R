@@ -82,7 +82,8 @@ ridgePlot <- function(gobject, feats, ...,
     space = NULL) {
     gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "expression",
-            "spatial_enrichment", "dimension_reduction"))
+            "spatial_enrichment", "dimension_reduction"),
+        spat_unit = spat_unit, feat_type = feat_type)
     value <- NULL # NSE vars
     package_check("ggridges")
     checkmate::assert_character(feats)
