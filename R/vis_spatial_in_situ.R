@@ -194,10 +194,11 @@ spatInSituPlotPoints <- function(
 
     # Pre-narrow once for the slots this plot reads (polygons, points,
     # locations, enrichment, expression-for-fill, metadata, images).
-    gobject <- .gg_materialize(.win$gobject, .win$view, space,
+    gobject <- .gg_resolve(.win$gobject, .win$view, space,
         slots = c("cell_metadata", "spatial_info", "spatial_locs",
             "spatial_enrichment", "feat_info", "feat_metadata",
-            "expression", "images"))
+            "expression", "images"),
+        spat_unit = polygon_feat_type, feat_type = feat_type)
 
     send_warn <- getOption("giotto.warn_sispp_feats", TRUE)
     if (is.null(feats) && send_warn) {
@@ -791,9 +792,10 @@ spatInSituPlotHex <- function(gobject,
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("cell_metadata", "spatial_info", "spatial_locs",
-            "feat_info", "feat_metadata", "images"))
+            "feat_info", "feat_metadata", "images"),
+        feat_type = feat_type)
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(
@@ -1074,9 +1076,10 @@ spatInSituPlotDensity <- function(gobject,
         ))
     }
     .gg_assert_giotto_single(gobject)
-    gobject <- .gg_materialize(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view, space,
         slots = c("spatial_info", "spatial_locs",
-            "feat_info", "feat_metadata", "images"))
+            "feat_info", "feat_metadata", "images"),
+        feat_type = feat_type)
     # deprecate
     if (GiottoUtils::is_present(polygon_size)) {
         deprecate_warn(

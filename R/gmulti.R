@@ -51,7 +51,7 @@ NULL
 .gg_multi_dispatch_spatial <- function(
         plot_fn, named, dots = list(), gobject, view, space, samples = NULL) {
     checkmate::assert_class(gobject, "giottoMulti")
-    # A name, never an inline recipe -- see `.gg_materialize`.
+    # A name, never an inline recipe -- see `.gg_resolve`.
     if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
     if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
 
@@ -63,18 +63,12 @@ NULL
 
     samples <- .resolve_samples(gobject, samples, space, child_names)
 
-    # View and space both apply once across the gmulti before the panel
-    # loop. The resolver's surviving-cell cache fills here, and each
-    # per-child getter chain in the loop below pulls only the slice
-    # belonging to its sample.
-    #
-    # `space` has to be applied HERE rather than forwarded to the panel
-    # call: `materialize()` on a multi hands each child the recipe scoped
-    # to its own name (`space_obj[samp]`), which is the only place the
-    # sample identity needed to pick a per-sample step is still known. A
-    # panel child is a plain `giotto` and has no name to resolve against.
+    # View and space apply once across the multi, before the panel loop: a
+    # panel child is a plain giotto with no sample name to scope a space by.
     if (!is.null(view) || !is.null(space)) {
-        gobject <- GiottoClass::materialize(gobject, view, space = space)
+        gobject <- GiottoClass::resolveRecipe(gobject, view = view,
+            space = space, spat_unit = named$spat_unit,
+            feat_type = named$feat_type)
         # a sample step in `view` may have narrowed children; reconcile
         # `samples` to the survivors. If a caller-supplied sample didn't
         # survive view narrowing, that's an error (silent drop is too

@@ -47,15 +47,16 @@ showClusterDendrogram <- function(gobject,
     ...) {
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
-    gobject <- .gg_materialize(gobject, view, space,
-        slots = c("cell_metadata", "expression", "spatial_enrichment"))
+    gobject <- .gg_resolve(gobject, view, space,
+        slots = c("cell_metadata", "expression", "spatial_enrichment"),
+        spat_unit = spat_unit, feat_type = feat_type)
 
     # A tree from `Giotto::calculateClusterTree()` can back the dendrogram, the
     # splits and any per-node analysis at once, instead of each rebuilding its
     # own from the expression values and being free to disagree. It also owns
     # the cluster ordering the correlation depends on.
     #
-    # Placed after `.gg_materialize()`, not before it: `gobject` still reaches
+    # Placed after `.gg_resolve()`, not before it: `gobject` still reaches
     # `plot_output_handler()` below, so `view` / `space` and a `giottoMulti`
     # behave the same whether or not a tree was supplied.
     if (!is.null(tree)) {
