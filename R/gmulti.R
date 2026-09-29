@@ -63,19 +63,9 @@ NULL
 
     samples <- .resolve_samples(gobject, samples, space, child_names)
 
-    # View and space both apply once across the gmulti before the panel
-    # loop. The resolver's surviving-cell cache fills here, and each
-    # per-child getter chain in the loop below pulls only the slice
-    # belonging to its sample.
-    #
-    # `space` has to be applied HERE rather than forwarded to the panel
-    # call: `resolveRecipe()` on a multi hands each child the recipe scoped
-    # to its own name (`space_obj[samp]`), which is the only place the
-    # sample identity needed to pick a per-sample step is still known. A
-    # panel child is a plain `giotto` and has no name to resolve against.
+    # View and space apply once across the multi, before the panel loop: a
+    # panel child is a plain giotto with no sample name to scope a space by.
     if (!is.null(view) || !is.null(space)) {
-        # scoped to the plot's own spat_unit / feat_type: a resolve op
-        # narrows only the scope it is asked about
         gobject <- GiottoClass::resolveRecipe(gobject, view = view,
             space = space, spat_unit = named$spat_unit,
             feat_type = named$feat_type)

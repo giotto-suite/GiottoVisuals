@@ -4,27 +4,18 @@ NULL
 
 # view / space pre-narrow ####
 
-# Thin wrapper around `GiottoClass::resolveRecipe()` for plot functions.
-# Do not inline it back — it folds the `view = NULL` guard that every
-# call site would otherwise carry into one place.
-#
-# `slots` is a character vector of the slot names this plot reads; see
-# [GiottoClass::resolveRecipe()] for the canonical set. `spat_unit` /
-# `feat_type` are the plot's own: a resolve op narrows only that scope, so a
-# plot must pass what it reads and read only what it passed.
-#
-# Why the guard is needed, and why this stays backend-agnostic: see
-# "View / space pre-narrow" in vignettes/articles/design.Rmd.
+# `GiottoClass::resolveRecipe()` for plot functions, folding in the
+# `view = NULL` guard every call site would otherwise repeat. `slots` are the
+# slots the plot reads; `spat_unit` / `feat_type` are the plot's own, since a
+# resolve op narrows only that scope. See design.Rmd, "View / space
+# pre-narrow".
 #
 #' @keywords internal
 #' @noRd
 .gg_resolve <- function(gobject, view, space, slots, spat_unit = NULL,
                         feat_type = NULL) {
     if (is.null(view) && is.null(space)) return(gobject)
-    # Same contract GiottoClass's getters enforce: a name, never an
-    # inline recipe. Asserted rather than left to dispatch so the caller
-    # is told what is wrong instead of "unable to find an inherited
-    # method for resolve".
+    # a name, never an inline recipe, as in GiottoClass's getters
     if (!is.null(view)) checkmate::assert_string(view, .var.name = "view")
     if (!is.null(space)) checkmate::assert_string(space, .var.name = "space")
     GiottoClass::resolveRecipe(gobject, view = view, space = space,
