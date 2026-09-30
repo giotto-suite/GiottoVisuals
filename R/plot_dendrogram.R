@@ -43,11 +43,10 @@ showClusterDendrogram <- function(gobject,
     default_save_name = "showClusterDendrogram",
     tree = NULL,
     view = NULL,
-    space = NULL,
     ...) {
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
 
@@ -57,7 +56,7 @@ showClusterDendrogram <- function(gobject,
     # the cluster ordering the correlation depends on.
     #
     # Placed after `.gg_resolve()`, not before it: `gobject` still reaches
-    # `plot_output_handler()` below, so `view` / `space` and a `giottoMulti`
+    # `plot_output_handler()` below, so `view` and a `giottoMulti`
     # behave the same whether or not a tree was supplied.
     if (!is.null(tree)) {
         if (!inherits(tree, "hclust")) {

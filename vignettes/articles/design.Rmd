@@ -111,6 +111,16 @@ more: `resolveRecipe()` takes `view` as a named argument defaulting to `NULL`, s
 plot with neither knob set would resolve correctly anyway; the guard only keeps
 it from paying for a pass that narrows nothing.
 
+**Only plots that draw coordinates take `space`.** A space re-frames
+coordinates, and the resolver applies it only to spatial locations, polygons,
+points and images. Expression, cell metadata, dimension reductions and spatial
+enrichment pass through unchanged, so a plot that reads nothing else --
+heatmaps, violin / ridge / dot plots, dendrograms, the `dim*Plot2D()` family --
+could not show any effect from one. Those plots take `view` alone, and
+`.gg_resolve()`'s `space` defaults to `NULL` for them. The narrowing a space
+does to a multi-sample panel set happens in `.gg_multi_dispatch_spatial()`,
+which only the spatial plots route through.
+
 What `resolveRecipe()` does not accept is a **recipe object** — `view` is a
 `character(1)` naming something slotted on the gobject. That is the contract,
 not an omission: a view or space is passed by name so that a result can say

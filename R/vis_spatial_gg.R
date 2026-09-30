@@ -1567,13 +1567,12 @@ dimPlot2D <- function(
         save_param = list(),
         default_save_name = "dimPlot2D",
         view = NULL,
-        space = NULL,
         samples = NULL) {
     # giottoMulti pass-through: gmulti carries a joint dim_reduction
     # slot (PCA / UMAP / TSNE run on the assembled expression matrix);
     # getDimReduction(mg, ...) returns that single joint embedding and
     # downstream getters return joint subobjects. No per-sample loop.
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"),
         spat_unit = spat_unit, feat_type = feat_type)
@@ -3598,9 +3597,8 @@ dimFeatPlot2D <- function(
         save_param = list(),
         default_save_name = "dimFeatPlot2D",
         view = NULL,
-        space = NULL,
         samples = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"),
         spat_unit = spat_unit, feat_type = feat_type)
@@ -4451,9 +4449,8 @@ dimCellPlot2D <- function(
         save_param = list(),
         default_save_name = "dimCellPlot2D",
         view = NULL,
-        space = NULL,
         samples = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "dimension_reduction",
             "spatial_enrichment", "expression"),
         spat_unit = spat_unit, feat_type = feat_type)

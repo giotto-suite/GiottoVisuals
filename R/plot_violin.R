@@ -44,9 +44,8 @@ violinPlot <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "violinPlot",
-    view = NULL,
-    space = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    view = NULL) {
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
     # Set feat_type and spat_unit

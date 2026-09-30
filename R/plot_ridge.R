@@ -78,9 +78,8 @@ ridgePlot <- function(gobject, feats, ...,
     save_param = list(),
     default_save_name = "ridgePlot",
     verbose = NULL,
-    view = NULL,
-    space = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    view = NULL) {
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression",
             "spatial_enrichment", "dimension_reduction"),
         spat_unit = spat_unit, feat_type = feat_type)
