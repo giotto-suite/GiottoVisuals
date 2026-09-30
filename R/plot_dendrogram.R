@@ -1,6 +1,9 @@
 #' @title showClusterDendrogram
 #' @name showClusterDendrogram
-#' @description Creates dendrogram for selected clusters.
+#' @description Deprecated. Build the tree with `Giotto::calculateClusterTree()`
+#' and plot it with `plot()` or `ggdendro::ggdendrogram()`. That tree is the one
+#' the splits, node markers and annotations use, so plotting it keeps the figure
+#' consistent with them; this function builds its own, which can differ.
 #' @inheritParams data_access_params
 #' @inheritParams plot_output_params
 #' @param expression_values expression values to use
@@ -14,16 +17,15 @@
 #' @param h height of horizontal lines to plot
 #' @param h_color color of horizontal lines
 #' @param rotate rotate dendrogram 90 degrees
-#' @param tree optional `hclust` from `Giotto::calculateClusterTree()`. When
-#' supplied the tree is plotted as given rather than rebuilt, so the same tree
-#' can back the plot, the splits and any per-node analysis.
 #' @inheritParams gmulti_params
 #' @inheritDotParams ggdendro::ggdendrogram
 #' @details Expression correlation dendrogram for selected clusters.
 #' @returns ggplot
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
-#' showClusterDendrogram(g, cluster_column = "leiden_clus")
+#' # instead of showClusterDendrogram(g, cluster_column = "leiden_clus"):
+#' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+#' plot(tree)
 #'
 #' @export
 showClusterDendrogram <- function(gobject,
@@ -41,42 +43,17 @@ showClusterDendrogram <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "showClusterDendrogram",
-    tree = NULL,
     view = NULL,
     ...) {
+    deprecate_soft("0.2.16", "showClusterDendrogram()",
+        "Giotto::calculateClusterTree()",
+        details = "Plot the returned tree with `plot()` or `ggdendro::ggdendrogram()`."
+    )
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
     gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
-
-    # A tree from `Giotto::calculateClusterTree()` can back the dendrogram, the
-    # splits and any per-node analysis at once, instead of each rebuilding its
-    # own from the expression values and being free to disagree. It also owns
-    # the cluster ordering the correlation depends on.
-    #
-    # Placed after `.gg_resolve()`, not before it: `gobject` still reaches
-    # `plot_output_handler()` below, so `view` and a `giottoMulti`
-    # behave the same whether or not a tree was supplied.
-    if (!is.null(tree)) {
-        if (!inherits(tree, "hclust")) {
-            stop("[showClusterDendrogram] `tree` must be an `hclust`, as ",
-                "returned by `Giotto::calculateClusterTree()`. Got: ",
-                paste(class(tree), collapse = "/"), ".", call. = FALSE)
-        }
-        pl <- ggdendro::ggdendrogram(
-            data = stats::as.dendrogram(tree), rotate = rotate, ...
-        )
-        if (!is.null(h)) {
-            pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
-        }
-        return(plot_output_handler(
-            gobject = gobject, plot_object = pl, save_plot = save_plot,
-            return_plot = return_plot, show_plot = show_plot,
-            default_save_name = default_save_name, save_param = save_param,
-            else_return = NULL
-        ))
-    }
 
     values <- match.arg(
         expression_values,
@@ -105,18 +82,21 @@ showClusterDendrogram <- function(gobject,
         metadata_cols = cluster_column
     )
 
-    pl <- create_cluster_dendrogram(
-        data = metatable,
-        clus_col = "uniq_ID",
-        var_col = "variable",
-        val_col = "value",
-        cor = cor,
-        distance = distance,
-        h = h,
-        h_color = h_color,
-        rotate = rotate,
-        ...
+    cor <- match.arg(cor, c("pearson", "spearman"))
+    testmatrix <- dt_to_matrix(x = data.table::dcast.data.table(metatable,
+        formula = variable ~ uniq_ID, value.var = "value"
+    ))
+    cormatrix <- cor_flex(x = testmatrix, method = cor)
+    corclus <- stats::hclust(
+        d = stats::as.dist(1 - cormatrix, diag = TRUE, upper = TRUE),
+        method = distance
     )
+    pl <- ggdendro::ggdendrogram(
+        data = stats::as.dendrogram(corclus), rotate = rotate, ...
+    )
+    if (!is.null(h)) {
+        pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
+    }
 
     return(plot_output_handler(
         gobject = gobject,
@@ -128,87 +108,6 @@ showClusterDendrogram <- function(gobject,
         save_param = save_param,
         else_return = NULL
     ))
-}
-
-
-#' @name create_cluster_dendrogram
-#' @title Create clustered expression dendrogram
-#' @description Create a dendrogram based on a data.table with columns for
-#' cluster ID, variables, and their values. If no specific values are provided
-#' for the 'col' params then they will be assumed as 1. clus_col, 2. var_col,
-#' 3. val_col
-#' @param data data.table. Should include columns with clustering labels,
-#' variables that are being clustered, and the values of those clusters.
-#' @param clus_col character. name of column with clustering info
-#' @param var_col character. name of column with variable name
-#' @param val_col character. name of column with values info
-#' @param cor correlation score to calculate distance
-#' (e.g. "pearson", "spearman")
-#' @param distance distance method to use for hierarchical clustering,
-#' default to "ward.D"
-#' @param h height of horizontal lines to plot
-#' @param h_color color of horizontal lines
-#' @param rotate rotate dendrogram 90 degrees
-#' @inheritDotParams ggdendro::ggdendrogram
-#' @returns ggdendrogram
-#' @examples
-#' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
-#'
-#' g_expression <- head(GiottoClass::getExpression(g, output = "matrix"))
-#' g_expression_df <- as.data.frame(as.matrix(g_expression))
-#' g_expression_df$feat_ID <- rownames(g_expression)
-#'
-#' g_expression_melt <- data.table::melt(g_expression_df,
-#'     id.vars = "feat_ID",
-#'     measure.vars = colnames(g_expression), variable.name = "cell_ID",
-#'     value.name = "raw_expression"
-#' )
-#'
-#' create_cluster_dendrogram(data.table::as.data.table(g_expression_melt),
-#'     var_col = "cell_ID", clus_col = "feat_ID", "raw_expression"
-#' )
-#'
-#' @export
-create_cluster_dendrogram <- function(
-        data,
-        clus_col = names(data)[[1]],
-        var_col = names(data)[[2]],
-        val_col = names(data)[[3]],
-        cor = c("pearson", "spearman"),
-        distance = "ward.D",
-        h = NULL,
-        h_color = "red",
-        rotate = FALSE,
-        ...) {
-    checkmate::assert_data_table(data)
-    checkmate::assert_character(clus_col)
-    checkmate::assert_character(var_col)
-    checkmate::assert_character(val_col)
-    cor <- match.arg(cor, c("pearson", "spearman"))
-
-    dcast_metatable <- data.table::dcast.data.table(
-        data = data,
-        formula = paste0(var_col, "~", clus_col),
-        value.var = val_col
-    )
-    testmatrix <- dt_to_matrix(x = dcast_metatable)
-
-    # correlation
-    cormatrix <- cor_flex(x = testmatrix, method = cor)
-    cordist <- stats::as.dist(1 - cormatrix, diag = TRUE, upper = TRUE)
-    corclus <- stats::hclust(d = cordist, method = distance)
-
-    cordend <- stats::as.dendrogram(object = corclus)
-
-    # plot dendrogram
-    pl <- ggdendro::ggdendrogram(data = cordend, rotate = rotate, ...)
-
-    # add horizontal or vertical lines
-    if (!is.null(h)) {
-        pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
-    }
-
-    pl
 }
 
 
@@ -246,7 +145,7 @@ create_cluster_dendrogram <- function(
 #' the evidence for each leaf next to the name it was given, so a small cluster
 #' with no marker of its own is visible rather than implied.
 #' @seealso `Giotto::calculateClusterTree()`,
-#' `Giotto::annotateClusterTree()`, [showClusterDendrogram()]
+#' `Giotto::annotateClusterTree()`
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
 #'

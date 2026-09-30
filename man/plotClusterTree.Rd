@@ -88,5 +88,5 @@ plotClusterTree(g,
 }
 \seealso{
 \code{Giotto::calculateClusterTree()},
-\code{Giotto::annotateClusterTree()}, \code{\link[=showClusterDendrogram]{showClusterDendrogram()}}
+\code{Giotto::annotateClusterTree()}
 }

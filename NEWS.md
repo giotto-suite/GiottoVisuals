@@ -13,16 +13,18 @@
   level to annotate. Labels resolve exactly as
   `Giotto::annotateClusterTree()` resolves them, so the figure and the columns
   written onto the object cannot disagree.
-- `showClusterDendrogram()` gains `tree`, for plotting an `hclust` you already
-  have -- typically from `Giotto::calculateClusterTree()` -- instead of
-  rebuilding one from the expression values. One tree can then back the plot,
-  the splits and any per-node analysis, rather than each rebuilding its own and
-  being free to disagree. `view` is honoured either way.
 
 ## bug fixes
 - `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now attached by `GiottoClass::annotateSpatialNetwork()` at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.
 
 ## changes
+- `showClusterDendrogram()` is deprecated. Build the tree with
+  `Giotto::calculateClusterTree()` and plot it with `plot()` or
+  `ggdendro::ggdendrogram()`. That tree is the one the splits, node markers
+  and annotations use; `showClusterDendrogram()` builds its own, which can
+  differ. It still works, and warns once per session.
+- `create_cluster_dendrogram()` is removed. Its only caller was
+  `showClusterDendrogram()`, which now builds the dendrogram itself.
 - minimum GiottoClass version is `>= 0.7.2`, for `annotateSpatialNetwork()`'s optional annotations.
 - `spatInSituPlotPoints()`'s `xlim` / `ylim` now **compose** with `view` instead of resolving as a second, separate narrowing. The window is appended as a crop step onto the named view and the pair resolves in one pass, so giving both yields their intersection. The machinery for this existed but nothing reached it, because the caller's view was consumed before the window was recorded.
 - a network drawn under a `view` shows only edges whose endpoints are drawn. This falls out of the endpoint lookup above — the view narrows the spatial locations and the edges follow — and matches what `select_cells` has always done. A `space` needs no handling: the locations the edges join to are already transformed.
