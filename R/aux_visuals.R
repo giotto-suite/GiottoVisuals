@@ -12,7 +12,7 @@ NULL
 #
 #' @keywords internal
 #' @noRd
-.gg_resolve <- function(gobject, view, space, slots, spat_unit = NULL,
+.gg_resolve <- function(gobject, view, space = NULL, slots, spat_unit = NULL,
                         feat_type = NULL) {
     if (is.null(view) && is.null(space)) return(gobject)
     # a name, never an inline recipe, as in GiottoClass's getters

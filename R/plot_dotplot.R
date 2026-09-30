@@ -111,15 +111,14 @@ dotPlot <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "dotPlot",
-    view = NULL,
-    space = NULL) {
+    view = NULL) {
     checkmate::assert_character(cluster_column, len = 1L)
     # giottoMulti pass-through: spatValues() routes through the gmulti's
     # joint / assembled expression + flattened cell_metadata, returning
     # a single data.table with `cell_ID` namespaced by sample. The dot
     # aggregations below operate on that unified table the same way
     # they do for a plain giotto — no per-sample looping needed.
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
     if (!is.null(gradient_limits)) {

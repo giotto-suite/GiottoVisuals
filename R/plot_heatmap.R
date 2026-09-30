@@ -35,11 +35,10 @@ showClusterHeatmap <- function(gobject,
     save_param = list(),
     default_save_name = "showClusterHeatmap",
     view = NULL,
-    space = NULL,
     ...) {
     # package Check
     package_check(pkg_name = "ComplexHeatmap", repository = "Bioc")
-    gobject <- .gg_resolve(gobject, view, space,
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
 
@@ -188,9 +187,8 @@ plotHeatmap <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "plotHeatmap",
-    view = NULL,
-    space = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    view = NULL) {
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
@@ -497,9 +495,8 @@ plotMetaDataHeatmap <- function(
         save_plot = NULL,
         save_param = list(),
         default_save_name = "plotMetaDataHeatmap",
-        view = NULL,
-        space = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+        view = NULL) {
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
@@ -892,9 +889,8 @@ plotMetaDataCellsHeatmap <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "plotMetaDataCellsHeatmap",
-    view = NULL,
-    space = NULL) {
-    gobject <- .gg_resolve(gobject, view, space,
+    view = NULL) {
+    gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
     # deprecate
