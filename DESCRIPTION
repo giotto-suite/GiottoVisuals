@@ -88,7 +88,7 @@ Collate:
     'gmulti.R'
     'gstop.R'
     'mixcolor.R'
-    'plot_dendrogram.R'
+    'plot_cluster_tree.R'
     'plot_dotplot.R'
     'plot_heatmap.R'
     'plot_ridge.R'

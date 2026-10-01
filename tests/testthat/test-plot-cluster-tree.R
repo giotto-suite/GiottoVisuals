@@ -125,3 +125,67 @@ test_that("plotClusterTree refuses what it cannot draw", {
         "must be between 1 and the number of clusters"
     )
 })
+
+
+test_that("plotClusterTree draws a giottoTree on its own", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    # no labels, no cluster_column: the tree records the column it was built on
+    p <- plotClusterTree(fx$gobject, tree,
+        return_plot = TRUE, show_plot = FALSE, save_plot = FALSE)
+    expect_s3_class(p, "ggplot")
+})
+
+
+test_that("plotClusterTree needs cluster_column for a plain hclust", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    plain <- .pct_tree(fx$gobject)
+    class(plain) <- "hclust"
+    attr(plain, "params") <- NULL
+    expect_error(plotClusterTree(fx$gobject, plain, show_plot = FALSE),
+        "`cluster_column` is needed")
+    p <- plotClusterTree(fx$gobject, plain, cluster_column = "clus",
+        return_plot = TRUE, show_plot = FALSE, save_plot = FALSE)
+    expect_s3_class(p, "ggplot")
+})
+
+
+test_that("plotClusterTree refuses a tree from another clustering", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    cx <- GiottoClass::getCellMetadata(fx$gobject, output = "cellMetaObj")
+    cx[][clus == "6", "clus" := "7"]
+    g2 <- GiottoClass::setCellMetadata(fx$gobject, cx, verbose = FALSE,
+        initialize = FALSE)
+    expect_error(plotClusterTree(g2, tree, show_plot = FALSE),
+        "clusters with no leaf: 7.*leaves with no cells: 6")
+})
+
+
+test_that("plotClusterTree counts within the tree's view, and flags another", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    g <- GiottoClass::addCellMetadata(fx$gobject, new_metadata = data.frame(
+        cell_ID = GiottoClass::spatIDs(fx$gobject),
+        keep = GiottoClass::pDataDT(fx$gobject)$clus %in% c("1", "2", "3")
+    ))
+    g <- subset(g, keep == TRUE, view = "v")
+    g <- subset(g, clus != "none", view = "all")
+    tree <- Giotto::calculateClusterTree(g, cluster_column = "clus",
+        expression_values = "raw", distance = "average", view = "v")
+
+    expect_message(
+        p <- plotClusterTree(g, tree, return_plot = TRUE, show_plot = FALSE,
+            save_plot = FALSE),
+        "using view \"v\" recorded on the tree"
+    )
+    expect_s3_class(p, "ggplot")
+    # the whole object brings back clusters the tree has no leaf for
+    expect_error(expect_warning(
+        plotClusterTree(g, tree, view = "all", show_plot = FALSE),
+        "the tree was built with `view = \"v\"`"
+    ), "clusters with no leaf")
+})
