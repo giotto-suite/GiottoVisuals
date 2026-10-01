@@ -1,6 +1,9 @@
 #' @title showClusterDendrogram
 #' @name showClusterDendrogram
-#' @description Creates dendrogram for selected clusters.
+#' @description Deprecated. Build the tree with `Giotto::calculateClusterTree()`
+#' and plot it with `plot()` or `ggdendro::ggdendrogram()`. That tree is the one
+#' the splits, node markers and annotations use, so plotting it keeps the figure
+#' consistent with them; this function builds its own, which can differ.
 #' @inheritParams data_access_params
 #' @inheritParams plot_output_params
 #' @param expression_values expression values to use
@@ -14,16 +17,15 @@
 #' @param h height of horizontal lines to plot
 #' @param h_color color of horizontal lines
 #' @param rotate rotate dendrogram 90 degrees
-#' @param tree optional `hclust` from `Giotto::calculateClusterTree()`. When
-#' supplied the tree is plotted as given rather than rebuilt, so the same tree
-#' can back the plot, the splits and any per-node analysis.
 #' @inheritParams gmulti_params
 #' @inheritDotParams ggdendro::ggdendrogram
 #' @details Expression correlation dendrogram for selected clusters.
 #' @returns ggplot
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
-#' showClusterDendrogram(g, cluster_column = "leiden_clus")
+#' # instead of showClusterDendrogram(g, cluster_column = "leiden_clus"):
+#' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+#' plot(tree)
 #'
 #' @export
 showClusterDendrogram <- function(gobject,
@@ -41,42 +43,17 @@ showClusterDendrogram <- function(gobject,
     save_plot = NULL,
     save_param = list(),
     default_save_name = "showClusterDendrogram",
-    tree = NULL,
     view = NULL,
     ...) {
+    deprecate_soft("0.2.16", "showClusterDendrogram()",
+        "Giotto::calculateClusterTree()",
+        details = "Plot the returned tree with `plot()` or `ggdendro::ggdendrogram()`."
+    )
     # verify if optional package is installed
     package_check(pkg_name = "ggdendro", repository = "CRAN")
     gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
-
-    # A tree from `Giotto::calculateClusterTree()` can back the dendrogram, the
-    # splits and any per-node analysis at once, instead of each rebuilding its
-    # own from the expression values and being free to disagree. It also owns
-    # the cluster ordering the correlation depends on.
-    #
-    # Placed after `.gg_resolve()`, not before it: `gobject` still reaches
-    # `plot_output_handler()` below, so `view` and a `giottoMulti`
-    # behave the same whether or not a tree was supplied.
-    if (!is.null(tree)) {
-        if (!inherits(tree, "hclust")) {
-            stop("[showClusterDendrogram] `tree` must be an `hclust`, as ",
-                "returned by `Giotto::calculateClusterTree()`. Got: ",
-                paste(class(tree), collapse = "/"), ".", call. = FALSE)
-        }
-        pl <- ggdendro::ggdendrogram(
-            data = stats::as.dendrogram(tree), rotate = rotate, ...
-        )
-        if (!is.null(h)) {
-            pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
-        }
-        return(plot_output_handler(
-            gobject = gobject, plot_object = pl, save_plot = save_plot,
-            return_plot = return_plot, show_plot = show_plot,
-            default_save_name = default_save_name, save_param = save_param,
-            else_return = NULL
-        ))
-    }
 
     values <- match.arg(
         expression_values,
@@ -105,18 +82,21 @@ showClusterDendrogram <- function(gobject,
         metadata_cols = cluster_column
     )
 
-    pl <- create_cluster_dendrogram(
-        data = metatable,
-        clus_col = "uniq_ID",
-        var_col = "variable",
-        val_col = "value",
-        cor = cor,
-        distance = distance,
-        h = h,
-        h_color = h_color,
-        rotate = rotate,
-        ...
+    cor <- match.arg(cor, c("pearson", "spearman"))
+    testmatrix <- dt_to_matrix(x = data.table::dcast.data.table(metatable,
+        formula = variable ~ uniq_ID, value.var = "value"
+    ))
+    cormatrix <- cor_flex(x = testmatrix, method = cor)
+    corclus <- stats::hclust(
+        d = stats::as.dist(1 - cormatrix, diag = TRUE, upper = TRUE),
+        method = distance
     )
+    pl <- ggdendro::ggdendrogram(
+        data = stats::as.dendrogram(corclus), rotate = rotate, ...
+    )
+    if (!is.null(h)) {
+        pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
+    }
 
     return(plot_output_handler(
         gobject = gobject,
@@ -131,100 +111,21 @@ showClusterDendrogram <- function(gobject,
 }
 
 
-#' @name create_cluster_dendrogram
-#' @title Create clustered expression dendrogram
-#' @description Create a dendrogram based on a data.table with columns for
-#' cluster ID, variables, and their values. If no specific values are provided
-#' for the 'col' params then they will be assumed as 1. clus_col, 2. var_col,
-#' 3. val_col
-#' @param data data.table. Should include columns with clustering labels,
-#' variables that are being clustered, and the values of those clusters.
-#' @param clus_col character. name of column with clustering info
-#' @param var_col character. name of column with variable name
-#' @param val_col character. name of column with values info
-#' @param cor correlation score to calculate distance
-#' (e.g. "pearson", "spearman")
-#' @param distance distance method to use for hierarchical clustering,
-#' default to "ward.D"
-#' @param h height of horizontal lines to plot
-#' @param h_color color of horizontal lines
-#' @param rotate rotate dendrogram 90 degrees
-#' @inheritDotParams ggdendro::ggdendrogram
-#' @returns ggdendrogram
-#' @examples
-#' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
-#'
-#' g_expression <- head(GiottoClass::getExpression(g, output = "matrix"))
-#' g_expression_df <- as.data.frame(as.matrix(g_expression))
-#' g_expression_df$feat_ID <- rownames(g_expression)
-#'
-#' g_expression_melt <- data.table::melt(g_expression_df,
-#'     id.vars = "feat_ID",
-#'     measure.vars = colnames(g_expression), variable.name = "cell_ID",
-#'     value.name = "raw_expression"
-#' )
-#'
-#' create_cluster_dendrogram(data.table::as.data.table(g_expression_melt),
-#'     var_col = "cell_ID", clus_col = "feat_ID", "raw_expression"
-#' )
-#'
-#' @export
-create_cluster_dendrogram <- function(
-        data,
-        clus_col = names(data)[[1]],
-        var_col = names(data)[[2]],
-        val_col = names(data)[[3]],
-        cor = c("pearson", "spearman"),
-        distance = "ward.D",
-        h = NULL,
-        h_color = "red",
-        rotate = FALSE,
-        ...) {
-    checkmate::assert_data_table(data)
-    checkmate::assert_character(clus_col)
-    checkmate::assert_character(var_col)
-    checkmate::assert_character(val_col)
-    cor <- match.arg(cor, c("pearson", "spearman"))
-
-    dcast_metatable <- data.table::dcast.data.table(
-        data = data,
-        formula = paste0(var_col, "~", clus_col),
-        value.var = val_col
-    )
-    testmatrix <- dt_to_matrix(x = dcast_metatable)
-
-    # correlation
-    cormatrix <- cor_flex(x = testmatrix, method = cor)
-    cordist <- stats::as.dist(1 - cormatrix, diag = TRUE, upper = TRUE)
-    corclus <- stats::hclust(d = cordist, method = distance)
-
-    cordend <- stats::as.dendrogram(object = corclus)
-
-    # plot dendrogram
-    pl <- ggdendro::ggdendrogram(data = cordend, rotate = rotate, ...)
-
-    # add horizontal or vertical lines
-    if (!is.null(h)) {
-        pl <- pl + ggplot2::geom_hline(yintercept = h, col = h_color)
-    }
-
-    pl
-}
-
-
 #' @title plotClusterTree
 #' @name plotClusterTree
 #' @description Publication figure for an annotated cluster tree: the
 #' dendrogram, a ladder showing how labels merge as the tree is cut more
 #' coarsely, and per-cluster evidence tracks.
 #' @param gobject giotto object
-#' @param spat_unit spatial unit
-#' @param feat_type feature type
-#' @param cluster_column name of the cell metadata column holding the clusters
-#' @param tree an `hclust` over the clusters, from
-#' `Giotto::calculateClusterTree()`
-#' @param labels the annotation, as a list with `clusters` and optionally
-#' `nodes`; the same object `Giotto::annotateClusterTree()` takes
+#' @param tree a `giottoTree` from `Giotto::calculateClusterTree()`, or any
+#' `hclust` over the clusters
+#' @param labels optional annotation, as a list with `clusters` and optionally
+#' `nodes`; the same object `Giotto::annotateClusterTree()` takes. `NULL`
+#' draws the tree with the cluster IDs as leaf labels and no ladder labels.
+#' @param spat_unit,feat_type,cluster_column,view default to those recorded on
+#' a `giottoTree`. An explicit value overrides the tree's, with a warning when
+#' they differ. `cluster_column` is required for a plain `hclust`. These only
+#' set which cells the size track counts; `view` names a slotted view.
 #' @param k granularities to draw as ladder bands, passed to [stats::cutree()].
 #' The finest is drawn at the top, nearest the leaves.
 #' @param gini_markers gini marker table carrying `detection_margin`, for the
@@ -246,25 +147,25 @@ create_cluster_dendrogram <- function(
 #' the evidence for each leaf next to the name it was given, so a small cluster
 #' with no marker of its own is visible rather than implied.
 #' @seealso `Giotto::calculateClusterTree()`,
-#' `Giotto::annotateClusterTree()`, [showClusterDendrogram()]
+#' `Giotto::annotateClusterTree()`
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
 #'
 #' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+#' plotClusterTree(g, tree)
+#'
 #' labs <- list(clusters = stats::setNames(
 #'     paste("type", tree$labels), tree$labels
 #' ))
-#' plotClusterTree(g,
-#'     cluster_column = "leiden_clus", tree = tree,
-#'     labels = labs, k = c(2, 4)
-#' )
+#' plotClusterTree(g, tree, labs, k = c(2, 4))
 #' @export
 plotClusterTree <- function(gobject,
+    tree,
+    labels = NULL,
     spat_unit = NULL,
     feat_type = NULL,
-    cluster_column,
-    tree,
-    labels,
+    cluster_column = NULL,
+    view = NULL,
     k = NULL,
     gini_markers = NULL,
     margin_cut = 25,
@@ -282,11 +183,20 @@ plotClusterTree <- function(gobject,
     # data.table variables
     x <- NULL
 
-    if (!inherits(tree, "hclust")) {
-        stop("[plotClusterTree] `tree` must be an `hclust`, as returned by ",
-            "`Giotto::calculateClusterTree()`. Got: ",
-            paste(class(tree), collapse = "/"), ".", call. = FALSE)
+    ctx <- .pct_tree_context(tree,
+        args = list(spat_unit = spat_unit, feat_type = feat_type,
+            cluster_column = cluster_column, view = view),
+        supplied = c(spat_unit = !is.null(spat_unit),
+            feat_type = !is.null(feat_type),
+            cluster_column = !is.null(cluster_column),
+            view = !is.null(view))
+    )
+    if (is.null(ctx$cluster_column)) {
+        stop("[plotClusterTree] `cluster_column` is needed: pass it, or use a ",
+            "tree from `Giotto::calculateClusterTree()`, which records one.",
+            call. = FALSE)
     }
+    cluster_column <- ctx$cluster_column
     # `cutree()` refuses an out-of-range `k`, but in its own terms rather than
     # naming the argument the caller passed. Same guard as
     # `Giotto::annotateClusterTree()`, so the two agree on what is askable.
@@ -303,11 +213,14 @@ plotClusterTree <- function(gobject,
         }
     }
     spat_unit <- set_default_spat_unit(
-        gobject = gobject, spat_unit = spat_unit
+        gobject = gobject, spat_unit = ctx$spat_unit
     )
     feat_type <- set_default_feat_type(
-        gobject = gobject, spat_unit = spat_unit, feat_type = feat_type
+        gobject = gobject, spat_unit = spat_unit, feat_type = ctx$feat_type
     )
+    # only the size track reads the object, so only cell metadata is narrowed
+    gobject <- .gg_resolve(gobject, ctx$view, slots = "cell_metadata",
+        spat_unit = spat_unit, feat_type = feat_type)
 
     ord <- tree$labels[tree$order]
     n_leaf <- length(ord)
@@ -323,7 +236,12 @@ plotClusterTree <- function(gobject,
         spat_unit = spat_unit, feat_type = feat_type,
         output = "data.table", copy_obj = TRUE
     )
+    if (!cluster_column %in% colnames(cm)) {
+        stop("[plotClusterTree] `", cluster_column,
+            "` is not a cell metadata column.", call. = FALSE)
+    }
     clus <- as.character(cm[[cluster_column]])
+    .pct_check_leaves(tree, clus)
     size <- vapply(ord, function(x) sum(clus == x), integer(1L))
 
     margin <- NULL
@@ -521,6 +439,60 @@ plotClusterTree <- function(gobject,
         default_save_name = default_save_name, save_param = save_param,
         else_return = NULL
     )
+}
+
+
+# Defaults from a giottoTree's recorded settings, as Giotto's tree consumers
+# take them; GiottoVisuals cannot call Giotto (Giotto imports it), so this is a
+# small copy of that rule rather than a shared helper. An explicit argument
+# always wins, flagged when it differs from the tree, since the counts then
+# describe different cells than the tree was built from.
+.pct_tree_context <- function(tree, args, supplied) {
+    if (!inherits(tree, "hclust")) {
+        stop("[plotClusterTree] `tree` must be an `hclust`, as returned by ",
+            "`Giotto::calculateClusterTree()`. Got: ",
+            paste(class(tree), collapse = "/"), ".", call. = FALSE)
+    }
+    rec <- if (inherits(tree, "giottoTree")) attr(tree, "params") else NULL
+    fmt <- function(x) paste0("\"", paste(x, collapse = ", "), "\"")
+    for (nm in names(args)) {
+        if (!nm %in% names(rec)) next
+        if (isTRUE(supplied[[nm]])) {
+            if (identical(as.character(args[[nm]]), as.character(rec[[nm]]))) next
+            was <- if (is.null(rec[[nm]])) {
+                sprintf("the tree was built with no `%s`", nm)
+            } else {
+                sprintf("the tree was built with `%s = %s`", nm, fmt(rec[[nm]]))
+            }
+            warning(sprintf("[plotClusterTree] using `%s = %s`, but %s; the results describe different data than the tree's splits.",
+                nm, fmt(args[[nm]]), was), call. = FALSE)
+        } else if (!is.null(rec[[nm]])) {
+            args[[nm]] <- rec[[nm]]
+            if (identical(nm, "view")) {
+                vmsg(.v = TRUE, sprintf(
+                    "[plotClusterTree] using view %s recorded on the tree",
+                    fmt(rec[[nm]])))
+            }
+        }
+    }
+    args
+}
+
+# A leaf with no cells would draw as an empty cluster and a cluster with no
+# leaf would be dropped from the counts, both silently.
+.pct_check_leaves <- function(tree, clusters) {
+    clusters <- unique(clusters[!is.na(clusters)])
+    no_leaf <- setdiff(clusters, tree$labels)
+    no_cells <- setdiff(tree$labels, clusters)
+    if (!length(no_leaf) && !length(no_cells)) {
+        return(invisible(TRUE))
+    }
+    stop(sprintf("[plotClusterTree] `tree` leaves do not match the clusters in the data.%s%s\nWas the tree built from another clustering, or under a different view?",
+        if (length(no_leaf)) paste0("\n  clusters with no leaf: ",
+            paste(no_leaf, collapse = ", ")) else "",
+        if (length(no_cells)) paste0("\n  leaves with no cells: ",
+            paste(no_cells, collapse = ", ")) else ""
+    ), call. = FALSE)
 }
 
 
