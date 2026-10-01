@@ -117,13 +117,15 @@ showClusterDendrogram <- function(gobject,
 #' dendrogram, a ladder showing how labels merge as the tree is cut more
 #' coarsely, and per-cluster evidence tracks.
 #' @param gobject giotto object
-#' @param spat_unit spatial unit
-#' @param feat_type feature type
-#' @param cluster_column name of the cell metadata column holding the clusters
-#' @param tree an `hclust` over the clusters, from
-#' `Giotto::calculateClusterTree()`
-#' @param labels the annotation, as a list with `clusters` and optionally
-#' `nodes`; the same object `Giotto::annotateClusterTree()` takes
+#' @param tree a `giottoTree` from `Giotto::calculateClusterTree()`, or any
+#' `hclust` over the clusters
+#' @param labels optional annotation, as a list with `clusters` and optionally
+#' `nodes`; the same object `Giotto::annotateClusterTree()` takes. `NULL`
+#' draws the tree with the cluster IDs as leaf labels and no ladder labels.
+#' @param spat_unit,feat_type,cluster_column,view default to those recorded on
+#' a `giottoTree`. An explicit value overrides the tree's, with a warning when
+#' they differ. `cluster_column` is required for a plain `hclust`. These only
+#' set which cells the size track counts; `view` names a slotted view.
 #' @param k granularities to draw as ladder bands, passed to [stats::cutree()].
 #' The finest is drawn at the top, nearest the leaves.
 #' @param gini_markers gini marker table carrying `detection_margin`, for the
@@ -150,20 +152,20 @@ showClusterDendrogram <- function(gobject,
 #' g <- GiottoData::loadGiottoMini("visium")
 #'
 #' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+#' plotClusterTree(g, tree)
+#'
 #' labs <- list(clusters = stats::setNames(
 #'     paste("type", tree$labels), tree$labels
 #' ))
-#' plotClusterTree(g,
-#'     cluster_column = "leiden_clus", tree = tree,
-#'     labels = labs, k = c(2, 4)
-#' )
+#' plotClusterTree(g, tree, labs, k = c(2, 4))
 #' @export
 plotClusterTree <- function(gobject,
+    tree,
+    labels = NULL,
     spat_unit = NULL,
     feat_type = NULL,
-    cluster_column,
-    tree,
-    labels,
+    cluster_column = NULL,
+    view = NULL,
     k = NULL,
     gini_markers = NULL,
     margin_cut = 25,
@@ -181,11 +183,20 @@ plotClusterTree <- function(gobject,
     # data.table variables
     x <- NULL
 
-    if (!inherits(tree, "hclust")) {
-        stop("[plotClusterTree] `tree` must be an `hclust`, as returned by ",
-            "`Giotto::calculateClusterTree()`. Got: ",
-            paste(class(tree), collapse = "/"), ".", call. = FALSE)
+    ctx <- .pct_tree_context(tree,
+        args = list(spat_unit = spat_unit, feat_type = feat_type,
+            cluster_column = cluster_column, view = view),
+        supplied = c(spat_unit = !is.null(spat_unit),
+            feat_type = !is.null(feat_type),
+            cluster_column = !is.null(cluster_column),
+            view = !is.null(view))
+    )
+    if (is.null(ctx$cluster_column)) {
+        stop("[plotClusterTree] `cluster_column` is needed: pass it, or use a ",
+            "tree from `Giotto::calculateClusterTree()`, which records one.",
+            call. = FALSE)
     }
+    cluster_column <- ctx$cluster_column
     # `cutree()` refuses an out-of-range `k`, but in its own terms rather than
     # naming the argument the caller passed. Same guard as
     # `Giotto::annotateClusterTree()`, so the two agree on what is askable.
@@ -202,11 +213,14 @@ plotClusterTree <- function(gobject,
         }
     }
     spat_unit <- set_default_spat_unit(
-        gobject = gobject, spat_unit = spat_unit
+        gobject = gobject, spat_unit = ctx$spat_unit
     )
     feat_type <- set_default_feat_type(
-        gobject = gobject, spat_unit = spat_unit, feat_type = feat_type
+        gobject = gobject, spat_unit = spat_unit, feat_type = ctx$feat_type
     )
+    # only the size track reads the object, so only cell metadata is narrowed
+    gobject <- .gg_resolve(gobject, ctx$view, slots = "cell_metadata",
+        spat_unit = spat_unit, feat_type = feat_type)
 
     ord <- tree$labels[tree$order]
     n_leaf <- length(ord)
@@ -222,7 +236,12 @@ plotClusterTree <- function(gobject,
         spat_unit = spat_unit, feat_type = feat_type,
         output = "data.table", copy_obj = TRUE
     )
+    if (!cluster_column %in% colnames(cm)) {
+        stop("[plotClusterTree] `", cluster_column,
+            "` is not a cell metadata column.", call. = FALSE)
+    }
     clus <- as.character(cm[[cluster_column]])
+    .pct_check_leaves(tree, clus)
     size <- vapply(ord, function(x) sum(clus == x), integer(1L))
 
     margin <- NULL
@@ -420,6 +439,60 @@ plotClusterTree <- function(gobject,
         default_save_name = default_save_name, save_param = save_param,
         else_return = NULL
     )
+}
+
+
+# Defaults from a giottoTree's recorded settings, as Giotto's tree consumers
+# take them; GiottoVisuals cannot call Giotto (Giotto imports it), so this is a
+# small copy of that rule rather than a shared helper. An explicit argument
+# always wins, flagged when it differs from the tree, since the counts then
+# describe different cells than the tree was built from.
+.pct_tree_context <- function(tree, args, supplied) {
+    if (!inherits(tree, "hclust")) {
+        stop("[plotClusterTree] `tree` must be an `hclust`, as returned by ",
+            "`Giotto::calculateClusterTree()`. Got: ",
+            paste(class(tree), collapse = "/"), ".", call. = FALSE)
+    }
+    rec <- if (inherits(tree, "giottoTree")) attr(tree, "params") else NULL
+    fmt <- function(x) paste0("\"", paste(x, collapse = ", "), "\"")
+    for (nm in names(args)) {
+        if (!nm %in% names(rec)) next
+        if (isTRUE(supplied[[nm]])) {
+            if (identical(as.character(args[[nm]]), as.character(rec[[nm]]))) next
+            was <- if (is.null(rec[[nm]])) {
+                sprintf("the tree was built with no `%s`", nm)
+            } else {
+                sprintf("the tree was built with `%s = %s`", nm, fmt(rec[[nm]]))
+            }
+            warning(sprintf("[plotClusterTree] using `%s = %s`, but %s; the results describe different data than the tree's splits.",
+                nm, fmt(args[[nm]]), was), call. = FALSE)
+        } else if (!is.null(rec[[nm]])) {
+            args[[nm]] <- rec[[nm]]
+            if (identical(nm, "view")) {
+                vmsg(.v = TRUE, sprintf(
+                    "[plotClusterTree] using view %s recorded on the tree",
+                    fmt(rec[[nm]])))
+            }
+        }
+    }
+    args
+}
+
+# A leaf with no cells would draw as an empty cluster and a cluster with no
+# leaf would be dropped from the counts, both silently.
+.pct_check_leaves <- function(tree, clusters) {
+    clusters <- unique(clusters[!is.na(clusters)])
+    no_leaf <- setdiff(clusters, tree$labels)
+    no_cells <- setdiff(tree$labels, clusters)
+    if (!length(no_leaf) && !length(no_cells)) {
+        return(invisible(TRUE))
+    }
+    stop(sprintf("[plotClusterTree] `tree` leaves do not match the clusters in the data.%s%s\nWas the tree built from another clustering, or under a different view?",
+        if (length(no_leaf)) paste0("\n  clusters with no leaf: ",
+            paste(no_leaf, collapse = ", ")) else "",
+        if (length(no_cells)) paste0("\n  leaves with no cells: ",
+            paste(no_cells, collapse = ", ")) else ""
+    ), call. = FALSE)
 }
 
 

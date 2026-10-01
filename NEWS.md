@@ -13,6 +13,12 @@
   level to annotate. Labels resolve exactly as
   `Giotto::annotateClusterTree()` resolves them, so the figure and the columns
   written onto the object cannot disagree.
+  `plotClusterTree(gobject, tree)` draws the tree on its own (`labels` is
+  optional). With a tree from `Giotto::calculateClusterTree()`, the
+  `cluster_column`, units and `view` its size track counts default to the ones
+  the tree recorded; an explicit value overrides them with a warning when they
+  differ. A tree whose leaves do not match the clusters in the data is an
+  error.
 
 ## bug fixes
 - `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now attached by `GiottoClass::annotateSpatialNetwork()` at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.
