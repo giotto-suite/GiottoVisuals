@@ -118,10 +118,10 @@ showClusterDendrogram <- function(gobject,
 #' @param x a `giottoTree`
 #' @param what `"tree"` (default) draws the dendrogram with the base `hclust`
 #' method. `"heatmap"` draws the correlation matrix recorded on the tree, in
-#' leaf order, with the tree's branches on both axes.
-#' @param ... passed to the base `hclust` plot method (e.g. `hang = -1`), or
-#' to `ComplexHeatmap::Heatmap()`
-#' @returns invisibly: `x` for `"tree"`, the `Heatmap` object for `"heatmap"`
+#' leaf order, with the tree's branches above it.
+#' @param ... passed to the base `hclust` plot method (e.g. `hang = -1`).
+#' Not used for `"heatmap"`: modify the returned ggplot instead.
+#' @returns invisibly: `x` for `"tree"`, the ggplot for `"heatmap"`
 #' @details
 #' The heatmap shows the matrix **the branches were built from**, so the two
 #' always agree. It describes the tree, not whatever object is current: to see
@@ -129,6 +129,12 @@ showClusterDendrogram <- function(gobject,
 #' [showClusterHeatmap()] with `cluster_custom_order =
 #' tree$labels[tree$order]`, which draws no branches. For the tree with
 #' annotations and per-cluster evidence, see [plotClusterTree()].
+#'
+#' The colour scale is sequential over the observed range (the
+#' `giotto.color_cs_pal` option, viridis by default): with correlation
+#' distance the branch height is 1 - r, so the colours track the heights.
+#' Cluster means are rarely anticorrelated unless the tree was built on
+#' centred values. The diagonal is left blank.
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
 #' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
@@ -153,23 +159,59 @@ plot.giottoTree <- function(x, what = c("tree", "heatmap"), ...) {
             "`showClusterHeatmap(cluster_custom_order = ",
             "tree$labels[tree$order])`.", call. = FALSE)
     }
-    package_check(pkg_name = "ComplexHeatmap", repository = "Bioc")
+    if (...length()) {
+        warning("[plot.giottoTree] `...` is not used for what = \"heatmap\"; ",
+            "modify the returned ggplot instead.", call. = FALSE)
+    }
     p <- attr(x, "params")
-    title <- sprintf("%s correlation of cluster means%s",
-        p$cor %null% "", if (is.null(p$n_feats)) "" else
-            sprintf(", %d features", p$n_feats))
-    hm <- ComplexHeatmap::Heatmap(
-        matrix = cm[x$labels, x$labels, drop = FALSE],
-        cluster_rows = x,
-        cluster_columns = x,
-        name = "r",
-        column_title = trimws(title),
-        ...
-    )
-    ComplexHeatmap::draw(hm)
-    invisible(hm)
-}
+    ord <- x$labels[x$order]
+    n <- length(ord)
 
+    cm <- cm[ord, ord, drop = FALSE]
+    diag(cm) <- NA
+    dt <- data.table::data.table(
+        a = rep(seq_len(n), times = n), # column position
+        b = rep(rev(seq_len(n)), each = n), # row position, diagonal top-left
+        r = as.vector(cm)
+    )
+
+    # the tree drawn in the heatmap's own coordinates, in a band above it
+    package_check(pkg_name = "ggdendro", repository = "CRAN")
+    seg <- data.table::as.data.table(
+        ggdendro::segment(ggdendro::dendro_data(x, type = "rectangle")))
+    base <- n + 0.5
+    hscale <- 0.25 * n / max(x$height)
+    seg[, c("y", "yend") := .(base + y * hscale, base + yend * hscale)]
+
+    rng <- range(dt$r, na.rm = TRUE)
+    fill_name <- if (is.null(p$cor)) "r" else paste(p$cor, "r")
+    fill_scale <- set_default_color_continuous(
+        style = "sequential", instr_pal = NULL, instr_rev = NULL,
+        limits = rng, na.value = "grey90", name = fill_name)
+    title <- sprintf("Correlation of cluster means%s",
+        if (is.null(p$n_feats)) "" else sprintf(", %d features", p$n_feats))
+
+    gg <- ggplot2::ggplot() +
+        ggplot2::geom_tile(data = dt,
+            ggplot2::aes(x = .data$a, y = .data$b, fill = .data$r),
+            colour = "white", linewidth = 0.3) +
+        ggplot2::geom_segment(data = seg,
+            ggplot2::aes(x = .data$x, y = .data$y,
+                xend = .data$xend, yend = .data$yend),
+            linewidth = 0.4) +
+        fill_scale +
+        ggplot2::scale_x_continuous(breaks = seq_len(n), labels = ord,
+            expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(breaks = rev(seq_len(n)), labels = ord,
+            expand = ggplot2::expansion(mult = c(0, 0.02))) +
+        ggplot2::coord_fixed() +
+        ggplot2::labs(x = NULL, y = NULL, title = title) +
+        ggplot2::theme_minimal(base_size = 9) +
+        ggplot2::theme(panel.grid = ggplot2::element_blank(),
+            axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+    print(gg)
+    invisible(gg)
+}
 
 #' @title plotClusterTree
 #' @name plotClusterTree

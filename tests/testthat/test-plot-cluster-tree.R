@@ -192,7 +192,7 @@ test_that("plotClusterTree counts within the tree's view, and flags another", {
 
 
 test_that("plot(tree) draws the tree, and what = 'heatmap' its own matrix", {
-    skip_if_not_installed("ComplexHeatmap")
+    skip_if_not_installed("ggdendro")
     fx <- .pct_gobject()
     tree <- .pct_tree(fx$gobject)
     grDevices::pdf(NULL)
@@ -200,12 +200,33 @@ test_that("plot(tree) draws the tree, and what = 'heatmap' its own matrix", {
 
     expect_no_warning(expect_identical(plot(tree, hang = -1), tree))
 
-    hm <- plot(tree, what = "heatmap")
-    expect_s4_class(hm, "Heatmap")
-    # the matrix the branches were built from, so the two cannot disagree
-    expect_identical(hm@matrix,
-        attr(tree, "cor_matrix")[tree$labels, tree$labels])
-    expect_identical(hm@row_dend_param$obj$merge, tree$merge)
+    gg <- plot(tree, what = "heatmap")
+    expect_s3_class(gg, "ggplot")
+    # the matrix the branches were built from, in leaf order, diagonal blank
+    ord <- tree$labels[tree$order]
+    cm <- attr(tree, "cor_matrix")[ord, ord]
+    diag(cm) <- NA
+    expect_identical(gg$layers[[1]]$data$r, as.vector(cm))
+    # ggdendro: one merge = four segments, and the leaves line up with the tiles
+    seg <- gg$layers[[2]]$data
+    expect_identical(nrow(seg), 4L * nrow(tree$merge))
+    expect_identical(range(seg$x), c(1, length(ord)))
+    expect_warning(plot(tree, what = "heatmap", hang = -1), "not used")
+})
+
+
+test_that("the heatmap scale is sequential over the observed range", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
+
+    cm <- attr(tree, "cor_matrix")
+    cm[1, 2] <- cm[2, 1] <- -0.5 # negatives do not switch to a diverging scale
+    attr(tree, "cor_matrix") <- cm
+    sc <- plot(tree, what = "heatmap")$scales$get_scales("fill")
+    expect_identical(sc$limits, range(cm[row(cm) != col(cm)]))
 })
 
 
