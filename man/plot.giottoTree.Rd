@@ -11,13 +11,13 @@
 
 \item{what}{\code{"tree"} (default) draws the dendrogram with the base \code{hclust}
 method. \code{"heatmap"} draws the correlation matrix recorded on the tree, in
-leaf order, with the tree's branches on both axes.}
+leaf order, with the tree's branches above it.}
 
-\item{...}{passed to the base \code{hclust} plot method (e.g. \code{hang = -1}), or
-to \code{ComplexHeatmap::Heatmap()}}
+\item{...}{passed to the base \code{hclust} plot method (e.g. \code{hang = -1}).
+Not used for \code{"heatmap"}: modify the returned ggplot instead.}
 }
 \value{
-invisibly: \code{x} for \code{"tree"}, the \code{Heatmap} object for \code{"heatmap"}
+invisibly: \code{x} for \code{"tree"}, the ggplot for \code{"heatmap"}
 }
 \description{
 Draw a \code{giottoTree} from \code{Giotto::calculateClusterTree()},
@@ -29,6 +29,12 @@ always agree. It describes the tree, not whatever object is current: to see
 correlations recomputed from an object in a tree's order, use
 \code{\link[=showClusterHeatmap]{showClusterHeatmap()}} with \code{cluster_custom_order = tree$labels[tree$order]}, which draws no branches. For the tree with
 annotations and per-cluster evidence, see \code{\link[=plotClusterTree]{plotClusterTree()}}.
+
+The colour scale is sequential over the observed range (the
+\code{giotto.color_cs_pal} option, viridis by default): with correlation
+distance the branch height is 1 - r, so the colours track the heights.
+Cluster means are rarely anticorrelated unless the tree was built on
+centred values. The diagonal is left blank.
 }
 \examples{
 g <- GiottoData::loadGiottoMini("visium")
