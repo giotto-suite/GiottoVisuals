@@ -19,6 +19,7 @@ showClusterHeatmap(
   save_param = list(),
   default_save_name = "showClusterHeatmap",
   view = NULL,
+  cluster_custom_order = NULL,
   ...
 )
 }
@@ -41,7 +42,7 @@ showClusterHeatmap(
 (e.g. "pearson", "spearman")}
 
 \item{distance}{distance method to use for hierarchical clustering,
-default to "ward.D"}
+default to "ward.D". Not used when \code{cluster_custom_order} is given.}
 
 \item{show_plot}{logical. show plot}
 
@@ -61,6 +62,12 @@ change save_name in save_param}
 read in the plot shares one resolver pass. A recipe object is not accepted —
 it has no name, so nothing downstream could say which view a figure came
 from.}
+
+\item{cluster_custom_order}{optional character vector giving the order of
+the clusters on both axes, e.g. the leaf order of a cluster tree,
+\code{tree$labels[tree$order]}. It must name every cluster shown, once. When
+given, the clusters are not clustered here and no dendrogram is drawn: the
+order is an arrangement, and the plot makes no claim about structure.}
 
 \item{...}{
   Arguments passed on to \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap}}
@@ -151,7 +158,7 @@ from.}
   }}
 }
 \value{
-ggplot
+a \code{ComplexHeatmap} \code{Heatmap} object
 }
 \description{
 Creates heatmap based on identified clusters
@@ -162,5 +169,12 @@ Correlation heatmap of selected clusters.
 \examples{
 g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 showClusterHeatmap(g, cluster_column = "leiden_clus")
+
+# in the leaf order of a cluster tree
+tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+showClusterHeatmap(g,
+    cluster_column = "leiden_clus",
+    cluster_custom_order = tree$labels[tree$order]
+)
 
 }
