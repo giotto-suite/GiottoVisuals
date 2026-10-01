@@ -189,3 +189,29 @@ test_that("plotClusterTree counts within the tree's view, and flags another", {
         "the tree was built with `view = \"v\"`"
     ), "clusters with no leaf")
 })
+
+
+test_that("plot(tree) draws the tree, and what = 'heatmap' its own matrix", {
+    skip_if_not_installed("ComplexHeatmap")
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
+
+    expect_no_warning(expect_identical(plot(tree, hang = -1), tree))
+
+    hm <- plot(tree, what = "heatmap")
+    expect_s4_class(hm, "Heatmap")
+    # the matrix the branches were built from, so the two cannot disagree
+    expect_identical(hm@matrix,
+        attr(tree, "cor_matrix")[tree$labels, tree$labels])
+    expect_identical(hm@row_dend_param$obj$merge, tree$merge)
+})
+
+
+test_that("a tree without its matrix says where to go instead", {
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    attr(tree, "cor_matrix") <- NULL
+    expect_error(plot(tree, what = "heatmap"), "cluster_custom_order")
+})
