@@ -7,32 +7,30 @@
 #' (e.g. "normalized", "scaled", "custom")
 #' @param feats vector of features to use, default to 'all'
 #' @param cluster_column name of column to use for clusters
-#' (e.g. "leiden_clus"). Required unless `tree` records one.
+#' (e.g. "leiden_clus")
 #' @param cor correlation score to calculate distance
 #' (e.g. "pearson", "spearman")
 #' @param distance distance method to use for hierarchical clustering,
-#' default to "ward.D". Not used when `tree` is given.
-#' @param tree optional `giottoTree` from `Giotto::calculateClusterTree()`, or
-#' any `hclust` over the clusters. Its branches and order are drawn on both
-#' axes instead of clustering the matrix here, so the heatmap shows the same
-#' tree as the splits, markers and annotations built on it.
+#' default to "ward.D". Not used when `cluster_custom_order` is given.
+#' @param cluster_custom_order optional character vector giving the order of
+#' the clusters on both axes, e.g. the leaf order of a cluster tree,
+#' `tree$labels[tree$order]`. It must name every cluster shown, once. When
+#' given, the clusters are not clustered here and no dendrogram is drawn: the
+#' order is an arrangement, and the plot makes no claim about structure.
 #' @inheritParams gmulti_params
 #' @inheritDotParams ComplexHeatmap::Heatmap
 #' @details Correlation heatmap of selected clusters.
-#'
-#' The correlations are always computed here, from the data being shown. With a
-#' `giottoTree`, `cluster_column`, `expression_values`, `feats`, `cor` and
-#' `view` default to the ones it was built from, so the colours come from the
-#' same cells and features as the branches. An explicit value overrides the
-#' tree's, with a warning when they differ. A tree whose leaves do not match the
-#' clusters in the data is an error.
-#' @returns ggplot
+#' @returns a `ComplexHeatmap` `Heatmap` object
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 #' showClusterHeatmap(g, cluster_column = "leiden_clus")
 #'
+#' # in the leaf order of a cluster tree
 #' tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
-#' showClusterHeatmap(g, tree = tree)
+#' showClusterHeatmap(g,
+#'     cluster_column = "leiden_clus",
+#'     cluster_custom_order = tree$labels[tree$order]
+#' )
 #'
 #' @export
 showClusterHeatmap <- function(gobject,
@@ -40,7 +38,7 @@ showClusterHeatmap <- function(gobject,
     feat_type = NULL,
     expression_values = c("normalized", "scaled", "custom"),
     feats = "all",
-    cluster_column = NULL,
+    cluster_column,
     cor = c("pearson", "spearman"),
     distance = "ward.D",
     show_plot = NULL,
@@ -49,38 +47,10 @@ showClusterHeatmap <- function(gobject,
     save_param = list(),
     default_save_name = "showClusterHeatmap",
     view = NULL,
-    tree = NULL,
+    cluster_custom_order = NULL,
     ...) {
     # package Check
     package_check(pkg_name = "ComplexHeatmap", repository = "Bioc")
-    if (!is.null(tree)) {
-        ctx <- .gv_tree_context(tree,
-            args = list(spat_unit = spat_unit, feat_type = feat_type,
-                expression_values = expression_values,
-                cluster_column = cluster_column,
-                feats = if (identical(feats, "all")) NULL else feats,
-                cor = cor, view = view),
-            supplied = c(spat_unit = !is.null(spat_unit),
-                feat_type = !is.null(feat_type),
-                expression_values = !missing(expression_values),
-                cluster_column = !is.null(cluster_column),
-                feats = !missing(feats), cor = !missing(cor),
-                view = !is.null(view)),
-            site = "showClusterHeatmap"
-        )
-        spat_unit <- ctx$spat_unit
-        feat_type <- ctx$feat_type
-        expression_values <- ctx$expression_values
-        cluster_column <- ctx$cluster_column
-        feats <- ctx$feats %null% "all"
-        cor <- ctx$cor
-        view <- ctx$view
-    }
-    if (is.null(cluster_column)) {
-        stop("[showClusterHeatmap] `cluster_column` is needed: pass it, or ",
-            "pass a `tree` from `Giotto::calculateClusterTree()`, which ",
-            "records one.", call. = FALSE)
-    }
     gobject <- .gg_resolve(gobject, view,
         slots = c("cell_metadata", "expression", "spatial_enrichment"),
         spat_unit = spat_unit, feat_type = feat_type)
@@ -99,8 +69,7 @@ showClusterHeatmap <- function(gobject,
 
     ## correlation
     cor <- match.arg(cor, c("pearson", "spearman"))
-    # any expression name, not only the three standard ones -- a tree may
-    # record the values it was built on under its own name
+    # any expression name, not only the three standard ones
     values <- match.arg(expression_values,
         unique(c("normalized", "scaled", "custom", expression_values)))
 
@@ -127,13 +96,24 @@ showClusterHeatmap <- function(gobject,
     )
     testmatrix <- dt_to_matrix(x = dcast_metatable)
 
-    # correlation, always from the data being shown
+    # correlation
     cormatrix <- cor_flex(x = testmatrix, method = cor)
-    if (!is.null(tree)) {
-        # the tree supplies the structure; its leaves index the matrix
-        .gv_check_leaves(tree, colnames(cormatrix), "showClusterHeatmap")
-        cormatrix <- cormatrix[tree$labels, tree$labels, drop = FALSE]
-        corclus <- tree
+    if (!is.null(cluster_custom_order)) {
+        # an arrangement only: no clustering here, so no dendrogram drawn
+        ord <- as.character(cluster_custom_order)
+        missing_clus <- setdiff(colnames(cormatrix), ord)
+        extra_clus <- setdiff(ord, colnames(cormatrix))
+        if (length(missing_clus) || length(extra_clus) || anyDuplicated(ord)) {
+            stop("[showClusterHeatmap] `cluster_custom_order` must name every ",
+                "cluster shown, once.",
+                if (length(missing_clus)) paste0("\n  missing: ",
+                    paste(missing_clus, collapse = ", ")),
+                if (length(extra_clus)) paste0("\n  not in the data: ",
+                    paste(extra_clus, collapse = ", ")),
+                call. = FALSE)
+        }
+        cormatrix <- cormatrix[ord, ord, drop = FALSE]
+        corclus <- FALSE
     } else {
         cordist <- stats::as.dist(1 - cormatrix, diag = TRUE, upper = TRUE)
         corclus <- stats::hclust(d = cordist, method = distance)

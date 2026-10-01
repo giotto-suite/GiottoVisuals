@@ -10,7 +10,7 @@ showClusterHeatmap(
   feat_type = NULL,
   expression_values = c("normalized", "scaled", "custom"),
   feats = "all",
-  cluster_column = NULL,
+  cluster_column,
   cor = c("pearson", "spearman"),
   distance = "ward.D",
   show_plot = NULL,
@@ -19,7 +19,7 @@ showClusterHeatmap(
   save_param = list(),
   default_save_name = "showClusterHeatmap",
   view = NULL,
-  tree = NULL,
+  cluster_custom_order = NULL,
   ...
 )
 }
@@ -36,13 +36,13 @@ showClusterHeatmap(
 \item{feats}{vector of features to use, default to 'all'}
 
 \item{cluster_column}{name of column to use for clusters
-(e.g. "leiden_clus"). Required unless \code{tree} records one.}
+(e.g. "leiden_clus")}
 
 \item{cor}{correlation score to calculate distance
 (e.g. "pearson", "spearman")}
 
 \item{distance}{distance method to use for hierarchical clustering,
-default to "ward.D". Not used when \code{tree} is given.}
+default to "ward.D". Not used when \code{cluster_custom_order} is given.}
 
 \item{show_plot}{logical. show plot}
 
@@ -63,10 +63,11 @@ read in the plot shares one resolver pass. A recipe object is not accepted —
 it has no name, so nothing downstream could say which view a figure came
 from.}
 
-\item{tree}{optional \code{giottoTree} from \code{Giotto::calculateClusterTree()}, or
-any \code{hclust} over the clusters. Its branches and order are drawn on both
-axes instead of clustering the matrix here, so the heatmap shows the same
-tree as the splits, markers and annotations built on it.}
+\item{cluster_custom_order}{optional character vector giving the order of
+the clusters on both axes, e.g. the leaf order of a cluster tree,
+\code{tree$labels[tree$order]}. It must name every cluster shown, once. When
+given, the clusters are not clustered here and no dendrogram is drawn: the
+order is an arrangement, and the plot makes no claim about structure.}
 
 \item{...}{
   Arguments passed on to \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap}}
@@ -157,26 +158,23 @@ tree as the splits, markers and annotations built on it.}
   }}
 }
 \value{
-ggplot
+a \code{ComplexHeatmap} \code{Heatmap} object
 }
 \description{
 Creates heatmap based on identified clusters
 }
 \details{
 Correlation heatmap of selected clusters.
-
-The correlations are always computed here, from the data being shown. With a
-\code{giottoTree}, \code{cluster_column}, \code{expression_values}, \code{feats}, \code{cor} and
-\code{view} default to the ones it was built from, so the colours come from the
-same cells and features as the branches. An explicit value overrides the
-tree's, with a warning when they differ. A tree whose leaves do not match the
-clusters in the data is an error.
 }
 \examples{
 g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 showClusterHeatmap(g, cluster_column = "leiden_clus")
 
+# in the leaf order of a cluster tree
 tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
-showClusterHeatmap(g, tree = tree)
+showClusterHeatmap(g,
+    cluster_column = "leiden_clus",
+    cluster_custom_order = tree$labels[tree$order]
+)
 
 }

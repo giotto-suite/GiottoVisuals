@@ -183,14 +183,13 @@ plotClusterTree <- function(gobject,
     # data.table variables
     x <- NULL
 
-    ctx <- .gv_tree_context(tree,
+    ctx <- .pct_tree_context(tree,
         args = list(spat_unit = spat_unit, feat_type = feat_type,
             cluster_column = cluster_column, view = view),
         supplied = c(spat_unit = !is.null(spat_unit),
             feat_type = !is.null(feat_type),
             cluster_column = !is.null(cluster_column),
-            view = !is.null(view)),
-        site = "plotClusterTree"
+            view = !is.null(view))
     )
     if (is.null(ctx$cluster_column)) {
         stop("[plotClusterTree] `cluster_column` is needed: pass it, or use a ",
@@ -242,7 +241,7 @@ plotClusterTree <- function(gobject,
             "` is not a cell metadata column.", call. = FALSE)
     }
     clus <- as.character(cm[[cluster_column]])
-    .gv_check_leaves(tree, clus, "plotClusterTree")
+    .pct_check_leaves(tree, clus)
     size <- vapply(ord, function(x) sum(clus == x), integer(1L))
 
     margin <- NULL
@@ -446,40 +445,33 @@ plotClusterTree <- function(gobject,
 # Defaults from a giottoTree's recorded settings, as Giotto's tree consumers
 # take them; GiottoVisuals cannot call Giotto (Giotto imports it), so this is a
 # small copy of that rule rather than a shared helper. An explicit argument
-# always wins, flagged when it differs from the tree, since the plot then shows
-# different data than the tree was built from. Values compare as sets: a
-# feature list given in another order is the same features.
-.gv_tree_context <- function(tree, args, supplied, site) {
+# always wins, flagged when it differs from the tree, since the counts then
+# describe different cells than the tree was built from.
+.pct_tree_context <- function(tree, args, supplied) {
     if (!inherits(tree, "hclust")) {
-        stop(sprintf("[%s] `tree` must be an `hclust`, as returned by `Giotto::calculateClusterTree()`. Got: %s.",
-            site, paste(class(tree), collapse = "/")), call. = FALSE)
+        stop("[plotClusterTree] `tree` must be an `hclust`, as returned by ",
+            "`Giotto::calculateClusterTree()`. Got: ",
+            paste(class(tree), collapse = "/"), ".", call. = FALSE)
     }
     rec <- if (inherits(tree, "giottoTree")) attr(tree, "params") else NULL
-    fmt <- function(x) {
-        x <- as.character(x)
-        if (!length(x)) return("all")
-        if (length(x) > 3L) x <- c(x[1:3], sprintf("... (%d)", length(x)))
-        paste0("\"", paste(x, collapse = ", "), "\"")
-    }
-    same <- function(a, b) {
-        identical(sort(as.character(a)), sort(as.character(b)))
-    }
+    fmt <- function(x) paste0("\"", paste(x, collapse = ", "), "\"")
     for (nm in names(args)) {
         if (!nm %in% names(rec)) next
         if (isTRUE(supplied[[nm]])) {
-            if (same(args[[nm]], rec[[nm]])) next
+            if (identical(as.character(args[[nm]]), as.character(rec[[nm]]))) next
             was <- if (is.null(rec[[nm]])) {
                 sprintf("the tree was built with no `%s`", nm)
             } else {
                 sprintf("the tree was built with `%s = %s`", nm, fmt(rec[[nm]]))
             }
-            warning(sprintf("[%s] using `%s = %s`, but %s; the plot shows different data than the tree's splits.",
-                site, nm, fmt(args[[nm]]), was), call. = FALSE)
+            warning(sprintf("[plotClusterTree] using `%s = %s`, but %s; the results describe different data than the tree's splits.",
+                nm, fmt(args[[nm]]), was), call. = FALSE)
         } else if (!is.null(rec[[nm]])) {
             args[[nm]] <- rec[[nm]]
             if (identical(nm, "view")) {
-                vmsg(.v = TRUE, sprintf("[%s] using view %s recorded on the tree",
-                    site, fmt(rec[[nm]])))
+                vmsg(.v = TRUE, sprintf(
+                    "[plotClusterTree] using view %s recorded on the tree",
+                    fmt(rec[[nm]])))
             }
         }
     }
@@ -487,16 +479,15 @@ plotClusterTree <- function(gobject,
 }
 
 # A leaf with no cells would draw as an empty cluster and a cluster with no
-# leaf would be dropped, both silently.
-.gv_check_leaves <- function(tree, clusters, site) {
+# leaf would be dropped from the counts, both silently.
+.pct_check_leaves <- function(tree, clusters) {
     clusters <- unique(clusters[!is.na(clusters)])
     no_leaf <- setdiff(clusters, tree$labels)
     no_cells <- setdiff(tree$labels, clusters)
     if (!length(no_leaf) && !length(no_cells)) {
         return(invisible(TRUE))
     }
-    stop(sprintf("[%s] `tree` leaves do not match the clusters in the data.%s%s\nWas the tree built from another clustering, or under a different view?",
-        site,
+    stop(sprintf("[plotClusterTree] `tree` leaves do not match the clusters in the data.%s%s\nWas the tree built from another clustering, or under a different view?",
         if (length(no_leaf)) paste0("\n  clusters with no leaf: ",
             paste(no_leaf, collapse = ", ")) else "",
         if (length(no_cells)) paste0("\n  leaves with no cells: ",
