@@ -10,7 +10,7 @@ showClusterHeatmap(
   feat_type = NULL,
   expression_values = c("normalized", "scaled", "custom"),
   feats = "all",
-  cluster_column,
+  cluster_column = NULL,
   cor = c("pearson", "spearman"),
   distance = "ward.D",
   show_plot = NULL,
@@ -19,6 +19,7 @@ showClusterHeatmap(
   save_param = list(),
   default_save_name = "showClusterHeatmap",
   view = NULL,
+  tree = NULL,
   ...
 )
 }
@@ -35,13 +36,13 @@ showClusterHeatmap(
 \item{feats}{vector of features to use, default to 'all'}
 
 \item{cluster_column}{name of column to use for clusters
-(e.g. "leiden_clus")}
+(e.g. "leiden_clus"). Required unless \code{tree} records one.}
 
 \item{cor}{correlation score to calculate distance
 (e.g. "pearson", "spearman")}
 
 \item{distance}{distance method to use for hierarchical clustering,
-default to "ward.D"}
+default to "ward.D". Not used when \code{tree} is given.}
 
 \item{show_plot}{logical. show plot}
 
@@ -61,6 +62,11 @@ change save_name in save_param}
 read in the plot shares one resolver pass. A recipe object is not accepted —
 it has no name, so nothing downstream could say which view a figure came
 from.}
+
+\item{tree}{optional \code{giottoTree} from \code{Giotto::calculateClusterTree()}, or
+any \code{hclust} over the clusters. Its branches and order are drawn on both
+axes instead of clustering the matrix here, so the heatmap shows the same
+tree as the splits, markers and annotations built on it.}
 
 \item{...}{
   Arguments passed on to \code{\link[ComplexHeatmap:Heatmap]{ComplexHeatmap::Heatmap}}
@@ -158,9 +164,19 @@ Creates heatmap based on identified clusters
 }
 \details{
 Correlation heatmap of selected clusters.
+
+The correlations are always computed here, from the data being shown. With a
+\code{giottoTree}, \code{cluster_column}, \code{expression_values}, \code{feats}, \code{cor} and
+\code{view} default to the ones it was built from, so the colours come from the
+same cells and features as the branches. An explicit value overrides the
+tree's, with a warning when they differ. A tree whose leaves do not match the
+clusters in the data is an error.
 }
 \examples{
 g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
 showClusterHeatmap(g, cluster_column = "leiden_clus")
+
+tree <- Giotto::calculateClusterTree(g, cluster_column = "leiden_clus")
+showClusterHeatmap(g, tree = tree)
 
 }
