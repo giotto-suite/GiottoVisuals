@@ -1521,7 +1521,7 @@ plot_spat_scatterpie_layer_ggplot <- function(ggobject,
     alpha = 1,
     cell_color_code = NULL) {
     # get cell names
-    cell_names <- colnames(spatial_enrichment)[-1]
+    cell_names <- setdiff(colnames(spatial_enrichment), "cell_ID")
 
     # combine spatial locations and enrichment results
     combined_spat_enrichm <- data.table::merge.data.table(

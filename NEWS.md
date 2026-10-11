@@ -1,3 +1,8 @@
+# GiottoVisuals 0.2.15.1
+
+## bug fixes
+- `spatDeconvPlot()` selects the cell type columns of the spatial enrichment by name instead of position, so it no longer fails when `cell_ID` is not the first column (e.g. DWLS results) ([#149](https://github.com/giotto-suite/GiottoVisuals/issues/149))
+
 # GiottoVisuals 0.2.15 (2026/05/14)
 
 ## bug fixes
