@@ -13,10 +13,12 @@ plotClusterTree(
   cluster_column = NULL,
   view = NULL,
   k = NULL,
+  h = NULL,
   gini_markers = NULL,
   margin_cut = 25,
   node_labels = TRUE,
   palette = NULL,
+  tree_height = 1.5,
   label_size = 3,
   base_size = 11,
   show_plot = NULL,
@@ -41,8 +43,14 @@ a \code{giottoTree}. An explicit value overrides the tree's, with a warning when
 they differ. \code{cluster_column} is required for a plain \code{hclust}. These only
 set which cells the size track counts; \code{view} names a slotted view.}
 
-\item{k}{granularities to draw as ladder bands, passed to \code{\link[stats:cutree]{stats::cutree()}}.
-The finest is drawn at the top, nearest the leaves.}
+\item{k, h}{granularities to draw as ladder bands, passed to
+\code{\link[stats:cutree]{stats::cutree()}}: \code{k} a number of groups, \code{h} a height to cut the tree at.
+Either may be a vector, and both may be given. Bands are ordered from the
+coarsest at the top to the finest at the bottom, next to the leaf labels;
+an \code{h} band shows how many groups its cut gives. With an \code{"average"},
+\code{"complete"}, \code{"single"} or \code{"mcquitty"} linkage the heights of a
+\code{calculateClusterTree()} tree are 1 - correlation, so \code{h = 0.2} keeps apart
+clusters that are more than 20\% dissimilar.}
 
 \item{gini_markers}{gini marker table carrying \code{detection_margin}, for the
 specificity track. Omit to leave that track out.}
@@ -52,8 +60,11 @@ feature of its own}
 
 \item{node_labels}{draw the label of each internal node on the tree}
 
-\item{palette}{colours for the coarsest ladder band, recycled across the
-others. A named vector keys colours to labels.}
+\item{palette}{colours for the coarsest ladder band. The finer bands use
+shades of these. A named vector keys colours to labels; an unnamed one is
+recycled.}
+
+\item{tree_height}{height of the tree panel, relative to the other panels}
 
 \item{label_size, base_size}{text sizes}
 
@@ -70,8 +81,8 @@ coarsely, and per-cluster evidence tracks.
 \details{
 The figure answers a question a bare dendrogram cannot: \strong{at what level
 should these clusters be annotated?} The ladder makes the trade-off legible
-— read down to see distinct labels collapse into one, read up to see a label
-split into types that the data may or may not support — and the tracks put
+— read down to see a label split into types that the data may or may not
+support, read up to see distinct labels collapse into one — and the tracks put
 the evidence for each leaf next to the name it was given, so a small cluster
 with no marker of its own is visible rather than implied.
 }
@@ -85,6 +96,9 @@ labs <- list(clusters = stats::setNames(
     paste("type", tree$labels), tree$labels
 ))
 plotClusterTree(g, tree, labs, k = c(2, 4))
+
+# or cut by height instead of by number of groups
+plotClusterTree(g, tree, labs, h = stats::quantile(tree$height, c(0.25, 0.75)))
 }
 \seealso{
 \code{Giotto::calculateClusterTree()},

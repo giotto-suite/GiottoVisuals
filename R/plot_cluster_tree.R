@@ -228,15 +228,23 @@ plot.giottoTree <- function(x, what = c("tree", "heatmap"), ...) {
 #' a `giottoTree`. An explicit value overrides the tree's, with a warning when
 #' they differ. `cluster_column` is required for a plain `hclust`. These only
 #' set which cells the size track counts; `view` names a slotted view.
-#' @param k granularities to draw as ladder bands, passed to [stats::cutree()].
-#' The finest is drawn at the top, nearest the leaves.
+#' @param k,h granularities to draw as ladder bands, passed to
+#' [stats::cutree()]: `k` a number of groups, `h` a height to cut the tree at.
+#' Either may be a vector, and both may be given. Bands are ordered from the
+#' coarsest at the top to the finest at the bottom, next to the leaf labels;
+#' an `h` band shows how many groups its cut gives. With an `"average"`,
+#' `"complete"`, `"single"` or `"mcquitty"` linkage the heights of a
+#' `calculateClusterTree()` tree are 1 - correlation, so `h = 0.2` keeps apart
+#' clusters that are more than 20% dissimilar.
 #' @param gini_markers gini marker table carrying `detection_margin`, for the
 #' specificity track. Omit to leave that track out.
 #' @param margin_cut detection margin below which a leaf is marked as having no
 #' feature of its own
 #' @param node_labels draw the label of each internal node on the tree
-#' @param palette colours for the coarsest ladder band, recycled across the
-#' others. A named vector keys colours to labels.
+#' @param palette colours for the coarsest ladder band. The finer bands use
+#' shades of these. A named vector keys colours to labels; an unnamed one is
+#' recycled.
+#' @param tree_height height of the tree panel, relative to the other panels
 #' @param label_size,base_size text sizes
 #' @param show_plot,return_plot,save_plot,save_param,default_save_name
 #' plot output settings, see [plot_output_handler()]
@@ -244,8 +252,8 @@ plot.giottoTree <- function(x, what = c("tree", "heatmap"), ...) {
 #' @details
 #' The figure answers a question a bare dendrogram cannot: **at what level
 #' should these clusters be annotated?** The ladder makes the trade-off legible
-#' — read down to see distinct labels collapse into one, read up to see a label
-#' split into types that the data may or may not support — and the tracks put
+#' — read down to see a label split into types that the data may or may not
+#' support, read up to see distinct labels collapse into one — and the tracks put
 #' the evidence for each leaf next to the name it was given, so a small cluster
 #' with no marker of its own is visible rather than implied.
 #' @seealso `Giotto::calculateClusterTree()`,
@@ -260,6 +268,9 @@ plot.giottoTree <- function(x, what = c("tree", "heatmap"), ...) {
 #'     paste("type", tree$labels), tree$labels
 #' ))
 #' plotClusterTree(g, tree, labs, k = c(2, 4))
+#'
+#' # or cut by height instead of by number of groups
+#' plotClusterTree(g, tree, labs, h = stats::quantile(tree$height, c(0.25, 0.75)))
 #' @export
 plotClusterTree <- function(gobject,
     tree,
@@ -269,10 +280,12 @@ plotClusterTree <- function(gobject,
     cluster_column = NULL,
     view = NULL,
     k = NULL,
+    h = NULL,
     gini_markers = NULL,
     margin_cut = 25,
     node_labels = TRUE,
     palette = NULL,
+    tree_height = 1.5,
     label_size = 3,
     base_size = 11,
     show_plot = NULL,
@@ -302,18 +315,8 @@ plotClusterTree <- function(gobject,
     # `cutree()` refuses an out-of-range `k`, but in its own terms rather than
     # naming the argument the caller passed. Same guard as
     # `Giotto::annotateClusterTree()`, so the two agree on what is askable.
-    if (!is.null(k)) {
-        if (!is.numeric(k) || anyNA(k)) {
-            stop("[plotClusterTree] `k` must be numeric and not NA.",
-                call. = FALSE)
-        }
-        bad <- k[k < 1 | k > length(tree$labels)]
-        if (length(bad)) {
-            stop("[plotClusterTree] `k` must be between 1 and the number of ",
-                "clusters in the tree (", length(tree$labels), "). Got: ",
-                paste(unique(bad), collapse = ", "), ".", call. = FALSE)
-        }
-    }
+    .pct_check_granularity(tree, k = k, h = h)
+    checkmate::assert_number(tree_height, lower = 0, finite = TRUE)
     spat_unit <- set_default_spat_unit(
         gobject = gobject, spat_unit = ctx$spat_unit
     )
@@ -357,44 +360,12 @@ plotClusterTree <- function(gobject,
     }
 
     # ---- ladder -----------------------------------------------------------
-    # Finest first, so the band nearest the leaves is the one that matches
-    # them. `cutree` returns groups keyed by leaf, which is what the band
-    # geometry needs -- no extra bookkeeping.
-    k <- sort(unique(k), decreasing = TRUE)
-    band <- NULL
-    if (length(k)) {
-        band <- data.table::rbindlist(lapply(seq_along(k), function(i) {
-            grp <- stats::cutree(tree, k = k[i])
-            lab <- .pct_group_labels(tree, leaf_lab, node_lab, grp)
-            data.table::data.table(
-                x = seq_len(n_leaf),
-                row = i,
-                level = sprintf("k = %d", k[i]),
-                label = unname(lab[ord])
-            )
-        }))
-        band[, "level" := factor(.SD[["level"]],
-            levels = sprintf("k = %d", k))]
-    }
-
-    # Colour by the coarsest band, so related leaves share a hue throughout.
-    #
-    # Deliberately NOT named `key`: `[.data.table` evaluates `setkeyv(ans, key)`
-    # internally when `by=` is given, and a local `key` in this frame is what
-    # that resolves to -- the grouped call below then fails trying to key the
-    # result by a vector of cell type names.
-    grp_key <- if (!is.null(band)) {
-        band[band$row == length(k)][order(x)][["label"]]
-    } else {
-        unname(leaf_lab[ord])
-    }
-    if (!is.null(band)) band[, "coarse" := grp_key[.SD[["x"]]]]
-    ukey <- unique(grp_key)
-    cols <- if (!is.null(palette)) {
-        palette
-    } else {
-        stats::setNames(getDistinctColors(length(ukey)), ukey)
-    }
+    # coarsest band first, so the ladder reads down from the root towards the
+    # leaves, with the finest band last, next to the leaf labels
+    band <- .pct_bands(tree, leaf_lab, node_lab, k = k, h = h)
+    runs <- if (!is.null(band)) .pct_band_runs(band) else NULL
+    shades <- .pct_shades(runs, unname(leaf_lab[ord]), palette)
+    runs <- shades$runs
 
     # ---- panel 1: the tree ------------------------------------------------
     dd <- ggdendro::dendro_data(tree, type = "rectangle")
@@ -412,7 +383,7 @@ plotClusterTree <- function(gobject,
         ggplot2::scale_y_continuous(expand = ggplot2::expansion(
             mult = c(0.02, 0.05)
         )) +
-        ggplot2::labs(x = NULL, y = "1 - correlation") +
+        ggplot2::labs(x = NULL, y = .pct_height_label(tree)) +
         ggplot2::theme_minimal(base_size = base_size) +
         ggplot2::theme(
             panel.grid = ggplot2::element_blank(),
@@ -436,32 +407,22 @@ plotClusterTree <- function(gobject,
 
     # ---- panel 2: the ladder ----------------------------------------------
     pieces <- list(p_tree)
-    heights <- c(3)
+    heights <- c(tree_height)
     if (!is.null(band)) {
-        # one rectangle per run of identical labels, so a group reads as a
-        # single block with one centred name rather than n repeated tiles
-        runs <- band[, {
-            r <- rle(.SD[["label"]])
-            e <- cumsum(r$lengths)
-            s <- e - r$lengths + 1L
-            list(xmin = s - 0.5, xmax = e + 0.5,
-                mid = (s + e) / 2, label = r$values,
-                coarse = .SD[["coarse"]][s])
-        }, by = "level"]
-
         p_band <- ggplot2::ggplot(runs) +
             ggplot2::geom_rect(
                 ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
-                    ymin = 0.1, ymax = 0.9, fill = .data$coarse),
+                    ymin = 0.1, ymax = 0.9, fill = .data$fill),
                 colour = "white", linewidth = 0.6, alpha = 0.85
             ) +
             ggplot2::geom_text(
-                ggplot2::aes(x = .data$mid, y = 0.5, label = .data$label),
-                size = label_size * 0.78, colour = "grey15", check_overlap = TRUE
+                ggplot2::aes(x = .data$mid, y = 0.5, label = .data$txt),
+                size = label_size * 0.78, colour = "grey15", lineheight = 0.85,
+                check_overlap = TRUE
             ) +
             ggplot2::facet_grid(rows = ggplot2::vars(.data$level),
                 switch = "y") +
-            ggplot2::scale_fill_manual(values = cols, guide = "none") +
+            ggplot2::scale_fill_identity() +
             ggplot2::scale_x_continuous(
                 limits = c(0.5, n_leaf + 0.5), expand = c(0, 0)
             ) +
@@ -479,7 +440,7 @@ plotClusterTree <- function(gobject,
                 plot.margin = ggplot2::margin(0, 6, 0, 6)
             )
         pieces <- c(pieces, list(p_band))
-        heights <- c(heights, 0.42 * length(k))
+        heights <- c(heights, 0.42 * nlevels(band$level))
     }
 
     # ---- panel 3: leaf labels + tracks ------------------------------------
@@ -488,18 +449,19 @@ plotClusterTree <- function(gobject,
         cluster = ord,
         label = unname(leaf_lab[ord]),
         size = as.numeric(size),
-        grp_key = grp_key
+        # darker than the band shade, so light hues stay readable on white
+        colour = .pct_mix(shades$leaf, "black", 0.55)
     )
     leaf_dt[, "txt" := sprintf("%s  %s", .SD[["cluster"]], .SD[["label"]])]
 
     p_leaf <- ggplot2::ggplot(leaf_dt) +
         ggplot2::geom_text(
             ggplot2::aes(x = .data$x, y = 0, label = .data$txt,
-                colour = .data$grp_key),
+                colour = .data$colour),
             angle = 90, hjust = 1, vjust = 0.5, size = label_size,
             fontface = "bold"
         ) +
-        ggplot2::scale_colour_manual(values = cols, guide = "none") +
+        ggplot2::scale_colour_identity() +
         ggplot2::scale_x_continuous(
             limits = c(0.5, n_leaf + 0.5), expand = c(0, 0)
         ) +
@@ -716,6 +678,203 @@ plotClusterTree <- function(gobject,
         out[members] <- lab
     }
     out
+}
+
+
+# Same range rule as `Giotto:::.check_tree_granularity()`, which this package
+# cannot call (Giotto imports GiottoVisuals).
+#' @keywords internal
+#' @noRd
+.pct_check_granularity <- function(tree, k = NULL, h = NULL) {
+    if (!is.null(k)) {
+        if (!is.numeric(k) || anyNA(k)) {
+            stop("[plotClusterTree] `k` must be numeric and not NA.",
+                call. = FALSE)
+        }
+        bad <- k[k < 1 | k > length(tree$labels)]
+        if (length(bad)) {
+            stop("[plotClusterTree] `k` must be between 1 and the number of ",
+                "clusters in the tree (", length(tree$labels), "). Got: ",
+                paste(unique(bad), collapse = ", "), ".", call. = FALSE)
+        }
+    }
+    if (!is.null(h)) {
+        if (!is.numeric(h) || anyNA(h)) {
+            stop("[plotClusterTree] `h` must be numeric and not NA.",
+                call. = FALSE)
+        }
+        bad <- h[h < 0]
+        if (length(bad)) {
+            stop("[plotClusterTree] `h` must not be negative. Got: ",
+                paste(unique(bad), collapse = ", "), ".", call. = FALSE)
+        }
+        top <- max(tree$height)
+        if (any(h > top)) {
+            warning("[plotClusterTree] `h` above the root height (",
+                signif(top, 3), ") puts every cluster in one group.",
+                call. = FALSE)
+        }
+    }
+    invisible(TRUE)
+}
+
+
+# One row per leaf and band. Bands are ordered by their number of groups,
+# coarsest first, whether they come from `k` or `h`; an `h` band names the
+# number of groups its cut gives.
+#' @keywords internal
+#' @noRd
+.pct_bands <- function(tree, leaf_lab, node_lab, k = NULL, h = NULL) {
+    cuts <- c(
+        lapply(sort(unique(k)), function(v) list(
+            grp = stats::cutree(tree, k = v),
+            name = sprintf("k = %d", as.integer(v))
+        )),
+        lapply(sort(unique(h)), function(v) {
+            grp <- stats::cutree(tree, h = v)
+            list(grp = grp,
+                name = sprintf("h = %s (%d)", format(v), max(grp)))
+        })
+    )
+    if (!length(cuts)) return(NULL)
+    n_grp <- vapply(cuts, function(x) max(x$grp), numeric(1L))
+    cuts <- cuts[order(n_grp)]
+    ord <- tree$labels[tree$order]
+    band <- data.table::rbindlist(lapply(seq_along(cuts), function(i) {
+        lab <- .pct_group_labels(tree, leaf_lab, node_lab, cuts[[i]]$grp)
+        data.table::data.table(
+            x = seq_along(ord),
+            row = i,
+            level = cuts[[i]]$name,
+            label = unname(lab[ord])
+        )
+    }))
+    band[, "level" := factor(.SD[["level"]],
+        levels = unique(vapply(cuts, `[[`, character(1L), "name")))]
+    band
+}
+
+
+# One rectangle per run of identical labels, so a group reads as a single
+# block with one centred name rather than n repeated tiles. A name much wider
+# than its block is split over two lines, so fewer are dropped as overlapping.
+#' @keywords internal
+#' @noRd
+.pct_band_runs <- function(band, chars_per_leaf = 10) {
+    runs <- band[, {
+        r <- rle(.SD[["label"]])
+        e <- cumsum(r$lengths)
+        s <- e - r$lengths + 1L
+        list(s = s, e = e, xmin = s - 0.5, xmax = e + 0.5,
+            mid = (s + e) / 2, label = r$values)
+    }, by = "level"]
+    txt <- runs$label
+    wide <- nchar(txt) > chars_per_leaf * (runs$e - runs$s + 1L)
+    txt[wide] <- vapply(txt[wide], function(l) {
+        # strwrap() keeps lines shorter than `width`, so allow for that
+        w <- max(ceiling(nchar(l) / 2), nchar(strsplit(l, " ")[[1L]])) + 2L
+        paste(strwrap(l, width = w), collapse = "\n")
+    }, character(1L), USE.NAMES = FALSE)
+    runs[, "txt" := txt]
+    runs
+}
+
+
+# One hue per block of the coarsest band, so a lineage keeps its colour down
+# the ladder, and a shade of that hue per block of the finest band, so the
+# finest band still tells its groups apart. A block in between takes the mean
+# of the shades it contains. Without a ladder each leaf label gets a colour.
+#' @keywords internal
+#' @noRd
+.pct_shades <- function(runs, leaf_label, palette = NULL) {
+    n_leaf <- length(leaf_label)
+    if (is.null(runs)) {
+        base <- .pct_palette(unique(leaf_label), palette)
+        return(list(leaf = unname(base[leaf_label]), runs = NULL))
+    }
+    lv <- levels(runs$level)
+    lvl <- as.character(runs$level)
+    coarse <- runs[lvl == lv[1L]]
+    fine <- runs[lvl == lv[length(lv)]]
+    base <- .pct_palette(unique(coarse$label), palette)
+
+    # a finest block is cut at coarse boundaries, so it always sits inside one
+    # coarse block, even when neighbouring groups share a name
+    coarse_of <- findInterval(seq_len(n_leaf), coarse$s)
+    fine_of <- findInterval(seq_len(n_leaf), fine$s)
+    unit <- paste(coarse_of, fine_of)
+    leaf <- character(n_leaf)
+    for (ci in seq_len(nrow(coarse))) {
+        in_c <- which(coarse_of == ci)
+        units <- unique(unit[in_c])
+        sh <- .pct_ramp(base[[coarse$label[ci]]], length(units))
+        leaf[in_c] <- sh[match(unit[in_c], units)]
+    }
+    fill <- vapply(seq_len(nrow(runs)), function(i) {
+        if (lvl[i] == lv[1L]) return(unname(base[[runs$label[i]]]))
+        .pct_mean_colour(unique(leaf[runs$s[i]:runs$e[i]]))
+    }, character(1L))
+    runs <- data.table::copy(runs)
+    runs[, "fill" := fill]
+    list(leaf = leaf, runs = runs)
+}
+
+
+# A colour per key: distinct colours by default; a named palette is matched
+# to the keys, an unnamed one recycled over them.
+#' @keywords internal
+#' @noRd
+.pct_palette <- function(keys, palette = NULL) {
+    if (is.null(palette)) {
+        return(stats::setNames(getDistinctColors(length(keys)), keys))
+    }
+    if (is.null(names(palette))) {
+        return(stats::setNames(rep_len(palette, length(keys)), keys))
+    }
+    out <- stats::setNames(rep("grey60", length(keys)), keys)
+    hit <- intersect(keys, names(palette))
+    out[hit] <- palette[hit]
+    out
+}
+
+
+# n shades of one colour, from darker to lighter around it.
+#' @keywords internal
+#' @noRd
+.pct_ramp <- function(col, n) {
+    if (n <= 1L) return(rep(col, n))
+    grDevices::colorRampPalette(c(
+        .pct_mix(col, "black", 0.35), col, .pct_mix(col, "white", 0.35)
+    ))(n)
+}
+
+
+#' @keywords internal
+#' @noRd
+.pct_mix <- function(col, with, w) {
+    a <- grDevices::col2rgb(col)
+    b <- as.vector(grDevices::col2rgb(with))
+    m <- (1 - w) * a + w * b
+    grDevices::rgb(m[1L, ], m[2L, ], m[3L, ], maxColorValue = 255)
+}
+
+
+#' @keywords internal
+#' @noRd
+.pct_mean_colour <- function(cols) {
+    m <- rowMeans(grDevices::col2rgb(cols))
+    grDevices::rgb(m[1L], m[2L], m[3L], maxColorValue = 255)
+}
+
+
+# A giottoTree is built on 1 - correlation, so with a linkage that keeps that
+# scale its heights read as dissimilarity; anything else is a plain height.
+#' @keywords internal
+#' @noRd
+.pct_height_label <- function(tree) {
+    on_scale <- inherits(tree, "giottoTree") &&
+        isTRUE(tree$method %in% c("average", "complete", "single", "mcquitty"))
+    if (on_scale) "1 - correlation" else "height"
 }
 
 
