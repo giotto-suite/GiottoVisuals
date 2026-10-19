@@ -322,7 +322,19 @@ test_that("a band name much wider than its block is split over two lines", {
     band <- data.table::data.table(x = 1:3, row = 1L,
         level = factor("k = 2"),
         label = c("a very long cell type name", "short", "short"))
-    runs <- .pct_band_runs(band)
+    # narrow: one leaf of many
+    runs <- .pct_band_runs(band, n_leaf = 40L)
     expect_match(runs$txt[1L], "\n", fixed = TRUE)
     expect_identical(runs$txt[2L], "short")
+    # wide: one leaf of three has room for the whole name
+    runs <- .pct_band_runs(band, n_leaf = 3L)
+    expect_identical(runs$txt[1L], "a very long cell type name")
+})
+
+
+test_that("neighbouring shades are not adjacent steps of the ramp", {
+    sh <- .pct_ramp("#3366CC", 6L)
+    expect_length(unique(sh), 6L)
+    lum <- colSums(grDevices::col2rgb(sh))
+    expect_gt(min(abs(diff(lum))), min(abs(diff(sort(lum)))))
 })

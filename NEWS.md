@@ -28,7 +28,8 @@
   so groups stay distinct within a lineage, and leaf labels use a darker shade.
   The tree panel is shorter (`tree_height`, default 1.5), and a band name much
   wider than its block is split over two lines. The height axis reads
-  "1 - correlation" only on that scale, "height" otherwise.
+  "1 - correlation" only on that scale, "height" otherwise. A leaf without a
+  label shows its cluster ID instead of "NA".
 
 ## bug fixes
 - `spatDeconvPlot()` selects the cell type columns of the spatial enrichment by name instead of position, so it no longer fails when `cell_ID` is not the first column (e.g. DWLS results) ([#149](https://github.com/giotto-suite/GiottoVisuals/issues/149))

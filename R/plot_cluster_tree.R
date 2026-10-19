@@ -363,8 +363,15 @@ plotClusterTree <- function(gobject,
     # coarsest band first, so the ladder reads down from the root towards the
     # leaves, with the finest band last, next to the leaf labels
     band <- .pct_bands(tree, leaf_lab, node_lab, k = k, h = h)
-    runs <- if (!is.null(band)) .pct_band_runs(band) else NULL
-    shades <- .pct_shades(runs, unname(leaf_lab[ord]), palette)
+    runs <- if (!is.null(band)) {
+        .pct_band_runs(band, n_leaf = n_leaf, label_size = label_size)
+    } else {
+        NULL
+    }
+    # an unlabelled leaf is keyed by its cluster ID, so it still gets a colour
+    leaf_key <- unname(leaf_lab[ord])
+    leaf_key[is.na(leaf_key)] <- ord[is.na(leaf_key)]
+    shades <- .pct_shades(runs, leaf_key, palette)
     runs <- shades$runs
 
     # ---- panel 1: the tree ------------------------------------------------
@@ -452,7 +459,8 @@ plotClusterTree <- function(gobject,
         # darker than the band shade, so light hues stay readable on white
         colour = .pct_mix(shades$leaf, "black", 0.55)
     )
-    leaf_dt[, "txt" := sprintf("%s  %s", .SD[["cluster"]], .SD[["label"]])]
+    leaf_dt[, "txt" := ifelse(is.na(.SD[["label"]]), .SD[["cluster"]],
+        sprintf("%s  %s", .SD[["cluster"]], .SD[["label"]]))]
 
     p_leaf <- ggplot2::ggplot(leaf_dt) +
         ggplot2::geom_text(
@@ -758,9 +766,12 @@ plotClusterTree <- function(gobject,
 # One rectangle per run of identical labels, so a group reads as a single
 # block with one centred name rather than n repeated tiles. A name much wider
 # than its block is split over two lines, so fewer are dropped as overlapping.
+# A block's width is its share of the leaves; `chars_across` is roughly how
+# many band characters fit across a typical figure at `label_size = 3`.
 #' @keywords internal
 #' @noRd
-.pct_band_runs <- function(band, chars_per_leaf = 10) {
+.pct_band_runs <- function(band, n_leaf = max(band$x), label_size = 3,
+    chars_across = 200) {
     runs <- band[, {
         r <- rle(.SD[["label"]])
         e <- cumsum(r$lengths)
@@ -769,7 +780,8 @@ plotClusterTree <- function(gobject,
             mid = (s + e) / 2, label = r$values)
     }, by = "level"]
     txt <- runs$label
-    wide <- nchar(txt) > chars_per_leaf * (runs$e - runs$s + 1L)
+    fits <- chars_across * 3 / label_size * (runs$e - runs$s + 1L) / n_leaf
+    wide <- nchar(txt) > fits
     txt[wide] <- vapply(txt[wide], function(l) {
         # strwrap() keeps lines shorter than `width`, so allow for that
         w <- max(ceiling(nchar(l) / 2), nchar(strsplit(l, " ")[[1L]])) + 2L
@@ -838,14 +850,19 @@ plotClusterTree <- function(gobject,
 }
 
 
-# n shades of one colour, from darker to lighter around it.
+# n shades of one colour, from darker to lighter around it, handed out
+# alternately from the two halves of the ramp so that neighbouring blocks
+# differ by about half the range rather than by one step.
 #' @keywords internal
 #' @noRd
 .pct_ramp <- function(col, n) {
     if (n <= 1L) return(rep(col, n))
-    grDevices::colorRampPalette(c(
+    ramp <- grDevices::colorRampPalette(c(
         .pct_mix(col, "black", 0.35), col, .pct_mix(col, "white", 0.35)
     ))(n)
+    half <- ceiling(n / 2)
+    idx <- as.vector(rbind(seq_len(half), half + seq_len(half)))
+    ramp[idx[idx <= n]]
 }
 
 
