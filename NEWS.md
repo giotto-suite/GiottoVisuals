@@ -21,6 +21,15 @@
   the tree recorded; an explicit value overrides them with a warning when they
   differ. A tree whose leaves do not match the clusters in the data is an
   error.
+- `plotClusterTree()` gains `h`, to draw bands cut at a tree height as well as
+  by `k`; on a `calculateClusterTree()` tree with average linkage a height is
+  1 - correlation. Bands now run from the coarsest at the top to the finest
+  next to the leaf labels. Finer bands use shades of the coarsest band's hue,
+  so groups stay distinct within a lineage, and leaf labels use a darker shade.
+  The tree panel is shorter (`tree_height`, default 1.5), and a band name much
+  wider than its block is split over two lines. The height axis reads
+  "1 - correlation" only on that scale, "height" otherwise. A leaf without a
+  label shows its cluster ID instead of "NA".
 
 ## bug fixes
 - `spatDeconvPlot()` selects the cell type columns of the spatial enrichment by name instead of position, so it no longer fails when `cell_ID` is not the first column (e.g. DWLS results) ([#149](https://github.com/giotto-suite/GiottoVisuals/issues/149))

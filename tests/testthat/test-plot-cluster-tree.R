@@ -236,3 +236,105 @@ test_that("a tree without its matrix says where to go instead", {
     attr(tree, "cor_matrix") <- NULL
     expect_error(plot(tree, what = "heatmap"), "cluster_custom_order")
 })
+
+
+test_that("bands run from the coarsest at the top to the finest", {
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    labs <- .pct_labels(tree)
+    h_mid <- stats::median(tree$height)
+
+    band <- .pct_bands(tree, labs$clusters, labs$nodes,
+        k = c(4L, 2L), h = h_mid)
+    n_h <- max(stats::cutree(tree, h = h_mid))
+    lv <- levels(band$level)
+    n_grp <- vapply(lv, function(l)
+        data.table::uniqueN(band[band$level == l]$label), numeric(1L))
+
+    expect_setequal(lv, c("k = 2", "k = 4",
+        sprintf("h = %s (%d)", format(h_mid), n_h)))
+    expect_false(is.unsorted(n_grp))
+    expect_identical(lv[1L], "k = 2")
+    expect_null(.pct_bands(tree, labs$clusters, labs$nodes))
+})
+
+
+test_that("plotClusterTree draws bands cut by height", {
+    skip_if_not_installed("ggdendro")
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    labs <- .pct_labels(tree)
+
+    p <- plotClusterTree(fx$gobject, tree, labs,
+        h = stats::quantile(tree$height, c(0.25, 0.75)), tree_height = 1,
+        return_plot = TRUE, show_plot = FALSE, save_plot = FALSE)
+    expect_s3_class(p, "ggplot")
+    p <- plotClusterTree(fx$gobject, tree, labs, k = 2L,
+        h = stats::median(tree$height),
+        return_plot = TRUE, show_plot = FALSE, save_plot = FALSE)
+    expect_s3_class(p, "ggplot")
+
+    expect_error(plotClusterTree(fx$gobject, tree, labs, h = -0.1),
+        "must not be negative")
+    expect_warning(
+        plotClusterTree(fx$gobject, tree, labs, h = max(tree$height) + 1,
+            return_plot = TRUE, show_plot = FALSE, save_plot = FALSE),
+        "above the root height"
+    )
+})
+
+
+test_that("finest groups get shades of their coarse group's hue", {
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    labs <- list(clusters = stats::setNames(
+        paste0("type_", tree$labels), tree$labels))
+    runs <- .pct_band_runs(.pct_bands(tree, labs$clusters, NULL,
+        k = c(2L, fx$n_clus)))
+    sh <- .pct_shades(runs, unname(labs$clusters[tree$labels[tree$order]]))
+
+    coarse <- sh$runs[as.character(sh$runs$level) == "k = 2"]
+    hue <- grDevices::rgb2hsv(grDevices::col2rgb(sh$leaf))["h", ]
+    for (i in seq_len(nrow(coarse))) {
+        in_c <- coarse$s[i]:coarse$e[i]
+        if (length(in_c) < 2L) next
+        expect_length(unique(sh$leaf[in_c]), length(in_c))
+        expect_lt(diff(range(hue[in_c])), 0.02)
+    }
+    expect_false(anyNA(sh$runs$fill))
+})
+
+
+test_that("the height axis says 1 - correlation only on that scale", {
+    fx <- .pct_gobject()
+    tree <- .pct_tree(fx$gobject)
+    expect_identical(.pct_height_label(tree), "1 - correlation")
+    ward <- Giotto::calculateClusterTree(fx$gobject, cluster_column = "clus",
+        expression_values = "raw", distance = "ward.D")
+    expect_identical(.pct_height_label(ward), "height")
+    plain <- tree
+    class(plain) <- "hclust"
+    expect_identical(.pct_height_label(plain), "height")
+})
+
+
+test_that("a band name much wider than its block is split over two lines", {
+    band <- data.table::data.table(x = 1:3, row = 1L,
+        level = factor("k = 2"),
+        label = c("a very long cell type name", "short", "short"))
+    # narrow: one leaf of many
+    runs <- .pct_band_runs(band, n_leaf = 40L)
+    expect_match(runs$txt[1L], "\n", fixed = TRUE)
+    expect_identical(runs$txt[2L], "short")
+    # wide: one leaf of three has room for the whole name
+    runs <- .pct_band_runs(band, n_leaf = 3L)
+    expect_identical(runs$txt[1L], "a very long cell type name")
+})
+
+
+test_that("neighbouring shades are not adjacent steps of the ramp", {
+    sh <- .pct_ramp("#3366CC", 6L)
+    expect_length(unique(sh), 6L)
+    lum <- colSums(grDevices::col2rgb(sh))
+    expect_gt(min(abs(diff(lum))), min(abs(diff(sort(lum)))))
+})
