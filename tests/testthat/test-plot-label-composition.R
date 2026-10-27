@@ -1,7 +1,4 @@
-# plotLabelProportions(): stacked bars of a label column within a group
-# column, from calculateLabelProportions(), a stored composition enrichment,
-# or a precomputed table. Ground truth is the counts the fixture is built
-# from.
+# plotLabelComposition(): ground truth is the counts the fixture is built from.
 
 .lp_gobject <- function(n_cells = 120L, seed = 3L) {
     set.seed(seed)
@@ -23,7 +20,7 @@
 }
 
 .lp <- function(...) {
-    plotLabelProportions(..., show_dendrogram = FALSE,
+    plotLabelComposition(..., show_dendrogram = FALSE,
         show_plot = FALSE, return_plot = TRUE, save_plot = FALSE)
 }
 
@@ -104,7 +101,7 @@ test_that("a view counts only the cells it keeps", {
 test_that("the dendrogram is drawn in the same plot, which takes layers", {
     skip_if_not_installed("ggdendro")
     g <- .lp_gobject()
-    p <- plotLabelProportions(g, groups = "grp", labels = "lab",
+    p <- plotLabelComposition(g, groups = "grp", labels = "lab",
         show_plot = FALSE, return_plot = TRUE, save_plot = FALSE)
     expect_s3_class(p, "ggplot")
     expect_true(any(vapply(p$layers, function(l)
@@ -128,10 +125,41 @@ test_that("inputs are checked", {
         spat_enr_name = "nb"), "exactly one")
     expect_error(.lp(g, groups = "nope", labels = "lab"),
         "not in the cell metadata")
-    expect_error(.lp(g, groups = "grp", labels = "lab",
-        custom_group_order = c("a", "z")), "absent groups")
     tab <- GiottoClass::calculateLabelProportions(g, labels = "lab",
         group_method = "table", groups = "grp", output = "data.table",
         verbose = FALSE)
     expect_error(.lp(g, proportions = tab, value = "count"), "needs `labels`")
+})
+
+test_that("a custom order must name every group or label, and nothing else", {
+    g <- .lp_gobject()
+    expect_error(.lp(g, groups = "grp", labels = "lab",
+        custom_group_order = c("a", "b", "c", "z")),
+        "custom_group_order names groups not in the data: z")
+    expect_error(.lp(g, groups = "grp", labels = "lab",
+        custom_group_order = c("a", "b")),
+        "custom_group_order is missing groups: c")
+    expect_error(.lp(g, groups = "grp", labels = "lab",
+        custom_label_order = c("x", "z")),
+        "custom_label_order names labels not in the data: z")
+    expect_error(.lp(g, groups = "grp", labels = "lab",
+        custom_label_order = "x"),
+        "custom_label_order is missing labels: y")
+    p <- .lp(g, groups = "grp", labels = "lab", custom_label_order = c("y", "x"))
+    expect_identical(levels(p$data$label), c("y", "x"))
+})
+
+test_that("a precomputed table needs no gobject; the other inputs do", {
+    g <- .lp_gobject()
+    tab <- GiottoClass::calculateLabelProportions(g, labels = "lab",
+        group_method = "table", groups = "grp", output = "data.table",
+        verbose = FALSE)
+    p <- .lp(proportions = tab)
+    expect_s3_class(p, "ggplot")
+    expect_equal(.lp_value(p, "a", "x"), 0.75)
+    expect_error(.lp(groups = "grp", labels = "lab"),
+        "`gobject` is needed unless `proportions` is given")
+    expect_warning(plotLabelComposition(proportions = tab,
+        show_dendrogram = FALSE, show_plot = FALSE, return_plot = TRUE,
+        save_plot = TRUE), "save_plot needs a gobject")
 })

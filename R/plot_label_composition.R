@@ -1,5 +1,5 @@
-#' @title Plot label proportions per group
-#' @name plotLabelProportions
+#' @title Plot label composition per group
+#' @name plotLabelComposition
 #' @description
 #' One stacked bar per group showing how it is composed of labels: what
 #' fraction of each spatial niche, cluster or region is each cell type. Groups
@@ -8,36 +8,53 @@
 #' @inheritParams data_access_params
 #' @inheritParams plot_output_params
 #' @inheritParams gmulti_params
+#' @param gobject giotto object. May be NULL with `proportions`; without one,
+#' the plot cannot be saved and the default colors come from
+#' `giotto.color_d_pal`.
 #' @param groups character. Cell metadata column whose values form the bars,
-#' such as a niche or cluster assignment.
-#' @param labels character. Cell metadata column whose values are stacked
-#' within each bar, such as a cell type.
-#' @param spat_enr_name character. A spatial enrichment holding a composition
-#' per cell, used instead of `labels`. Its columns are averaged within each
-#' group, so a neighborhood composition from
+#' such as a niche or cluster assignment. With `proportions`, only the axis
+#' title (default: the table's first column name).
+#' @param labels character. One of three inputs (see Details). Cell metadata
+#' column whose values are stacked within each bar, such as a cell type.
+#' @param spat_enr_name character. One of three inputs (see Details). A
+#' spatial enrichment holding a composition per cell. Its columns are averaged
+#' within each group, so a neighborhood composition from
 #' `calculateLabelProportions(group_method = "spatialnetwork")` becomes the
-#' mean neighborhood of the cells in each group.
-#' @param proportions data.frame. Precomputed proportions instead of `labels`
-#' or `spat_enr_name`: one row per group, the group IDs in the first column
-#' and one numeric column per label, as returned by
-#' `calculateLabelProportions(output = "data.table")`.
-#' @param value character. "proportion" (default) scales each bar to one;
+#' mean neighborhood of the cells in each group. Values must be non-negative,
+#' each numeric column becomes one stacked label, and `value = "count"` is not
+#' available with it.
+#' @param proportions data.frame. One of three inputs (see Details).
+#' Precomputed proportions: one row per group, the group IDs in the first
+#' column and one numeric column per label, as returned by
+#' `calculateLabelProportions(output = "data.table")`. Each row is rescaled to
+#' sum to one, and missing values count as zero.
+#' @param value character. "proportion" (default) draws each bar to 100%;
 #' "count" shows the number of cells, and needs `labels`.
 #' @param cluster_groups logical. Order the bars by a hierarchical clustering
-#' of their composition. Otherwise they are sorted by name.
+#' of their composition. Otherwise they are sorted by name. Ignored when
+#' `custom_group_order` is given. With fewer than three groups or one label,
+#' bars are sorted by name.
 #' @param dist_method character. Distance between compositions before
 #' clustering. "correlation" (1 - r) compares the shape of a composition
-#' rather than its size; "euclidean" is also available.
+#' rather than its size; "euclidean" is also available. Falls back to
+#' Euclidean when a correlation is undefined, as for a group with an even
+#' composition.
 #' @param hclust_method character. Passed to `stats::hclust()`.
 #' @param show_dendrogram logical. Draw the dendrogram to the right of the
-#' bars, in the same plot. Needs the ggdendro package.
+#' bars, in the same plot. Only when the bars are clustered. Without
+#' ggdendro, the order is kept and the tree is not drawn.
 #' @param custom_group_order,custom_label_order character. Explicit order of
-#' the bars and of the labels within them.
+#' the bars and of the labels within them. Must list every group or label in
+#' the data, and nothing else.
 #' @param label_color_code named character. A color per label, such as the
-#' cell type colors used in other plots.
-#' @param show_values logical. Print each segment's value on it.
-#' @param min_value_shown numeric. Segments narrower than this fraction of
-#' their bar are left unlabeled.
+#' cell type colors used in other plots. Labels not named here are drawn
+#' gray. Default: the suite discrete palette (`giotto.color_d_pal`).
+#' @param show_values logical. Print each segment's percentage (or cell count)
+#' inside it.
+#' @param min_value_shown numeric. Smallest segment that gets a printed value,
+#' as a fraction of its bar (of the longest bar when `value = "count"`).
+#' Longer labels need proportionally more room.
+#' @param value_text_size numeric. Size of the values printed on the bars.
 #' @details
 #' Exactly one of `labels`, `spat_enr_name` and `proportions` is used. With
 #' `labels` the proportions are computed by
@@ -45,15 +62,14 @@
 #' function returns. The two group answers differ: `labels` gives the share
 #' of the cells in each group that carry each label, `spat_enr_name` the mean
 #' composition of the neighborhoods of the cells in each group.
-#' @param value_text_size numeric. Size of the values printed on the bars.
 #' @returns ggplot
 #' @seealso `Giotto::plotCTCompositionInNicheCluster()` for niche clusters
 #' from ONTraC.
 #' @examples
 #' g <- GiottoData::loadGiottoMini("visium")
-#' plotLabelProportions(g, groups = "leiden_clus", labels = "custom_leiden")
+#' plotLabelComposition(g, groups = "leiden_clus", labels = "custom_leiden")
 #' @export
-plotLabelProportions <- function(gobject,
+plotLabelComposition <- function(gobject = NULL,
     spat_unit = NULL,
     feat_type = NULL,
     groups,
@@ -75,7 +91,7 @@ plotLabelProportions <- function(gobject,
     return_plot = NULL,
     save_plot = NULL,
     save_param = list(),
-    default_save_name = "plotLabelProportions",
+    default_save_name = "plotLabelComposition",
     view = NULL) {
     # NSE vars
     group <- label <- frac <- txt <- x <- y <- xend <- yend <- tx <- txend <- NULL
@@ -92,6 +108,10 @@ plotLabelProportions <- function(gobject,
     if (identical(value, "count") && !sources[["labels"]]) {
         stop("value = \"count\" needs `labels`: an enrichment or a table of ",
             "proportions carries no cell counts", call. = FALSE)
+    }
+    if (is.null(gobject) && !sources[["proportions"]]) {
+        stop("`gobject` is needed unless `proportions` is given",
+            call. = FALSE)
     }
     checkmate::assert_flag(cluster_groups)
     checkmate::assert_flag(show_dendrogram)
@@ -153,13 +173,13 @@ plotLabelProportions <- function(gobject,
         m <- m / rowSums(m)
     }
 
+    .lp_check_order(custom_group_order, rownames(m),
+        "custom_group_order", "groups")
+    .lp_check_order(custom_label_order, colnames(m),
+        "custom_label_order", "labels")
+
     hc <- NULL
     if (!is.null(custom_group_order)) {
-        absent <- setdiff(custom_group_order, rownames(m))
-        if (length(absent)) {
-            stop("custom_group_order names absent groups: ",
-                paste(absent, collapse = ", "), call. = FALSE)
-        }
         group_order <- custom_group_order
     } else if (cluster_groups && nrow(m) > 2L && ncol(m) > 1L) {
         d <- if (identical(dist_method, "correlation")) {
@@ -167,7 +187,6 @@ plotLabelProportions <- function(gobject,
         } else {
             stats::dist(m)
         }
-        # a perfectly even composition has no correlation with anything
         if (anyNA(d)) d <- stats::dist(m)
         hc <- stats::hclust(d, method = hclust_method)
         group_order <- rownames(m)[hc$order]
@@ -189,14 +208,15 @@ plotLabelProportions <- function(gobject,
         label_color_code
     } else {
         stats::setNames(set_default_color_discrete_cell(
-            instrs = instructions(gobject))(n = length(label_order)),
+            instrs = if (!is.null(gobject)) instructions(gobject)
+        )(n = length(label_order)),
             label_order)
     }
 
     pl <- ggplot2::ggplot(long, ggplot2::aes(value, group, fill = label)) +
         ggplot2::geom_col(width = 0.8) +
         ggplot2::scale_fill_manual(values = colors, breaks = label_order,
-            na.value = "grey85") +
+            na.value = "gray85") +
         ggplot2::scale_y_discrete(expand = c(0, 0.6)) +
         ggplot2::labs(y = group_name,
             fill = labels %null% spat_enr_name %null% "label",
@@ -221,8 +241,6 @@ plotLabelProportions <- function(gobject,
     if (show_values) {
         as_pct <- identical(value, "proportion")
         lab_dt <- data.table::copy(long)
-        # counts share one axis across bars of different lengths, so a
-        # segment's room is measured against the longest bar
         if (as_pct) {
             lab_dt[, frac := value / sum(value), by = "group"]
         } else {
@@ -233,8 +251,7 @@ plotLabelProportions <- function(gobject,
         } else {
             format(value, big.mark = ",", trim = TRUE)
         }]
-        # blank the text rather than drop the row: position_stack stacks
-        # whatever rows it is given, so a dropped row shifts every label
+        # blank rather than drop: position_stack would shift the other labels
         lab_dt[frac < min_value_shown * pmax(1, nchar(txt) / 3), txt := ""]
         pl <- pl + ggplot2::geom_text(data = lab_dt,
             ggplot2::aes(x = value, y = group, label = txt, group = label),
@@ -247,8 +264,6 @@ plotLabelProportions <- function(gobject,
             message("ggdendro is not installed, so the dendrogram is not ",
                 "drawn; the bars keep its order")
         } else {
-            # the tree shares the bars' y positions, drawn to their right in
-            # the same panel, so legends, labs() and theme() act on one plot
             seg <- data.table::as.data.table(ggdendro::dendro_data(
                 stats::as.dendrogram(hc), type = "rectangle")$segments)
             gap <- 0.02 * bar_end
@@ -258,15 +273,39 @@ plotLabelProportions <- function(gobject,
             pl <- pl +
                 ggplot2::geom_segment(data = seg,
                     ggplot2::aes(x = tx, xend = txend, y = x, yend = xend),
-                    linewidth = 0.3, color = "grey35", inherit.aes = FALSE) +
+                    linewidth = 0.3, color = "gray35", inherit.aes = FALSE) +
                 ggplot2::annotate("segment", x = 0, xend = bar_end,
                     y = -Inf, yend = -Inf) +
                 ggplot2::theme(axis.line.x = ggplot2::element_blank())
         }
     }
 
+    # plot_output_handler() needs a gobject for its show/save defaults
+    if (is.null(gobject)) {
+        if (isTRUE(save_plot)) {
+            warning("save_plot needs a gobject to read its save settings ",
+                "from", call. = FALSE)
+        }
+        if (!isFALSE(show_plot)) print(pl)
+        return(if (isFALSE(return_plot)) invisible(NULL) else pl)
+    }
+
     plot_output_handler(gobject = gobject, plot_object = pl,
         save_plot = save_plot, return_plot = return_plot,
         show_plot = show_plot, default_save_name = default_save_name,
         save_param = save_param, else_return = NULL)
+}
+
+.lp_check_order <- function(custom_order, present, arg, what) {
+    if (is.null(custom_order)) return(invisible())
+    unknown <- setdiff(custom_order, present)
+    if (length(unknown)) {
+        stop(arg, " names ", what, " not in the data: ",
+            paste(unknown, collapse = ", "), call. = FALSE)
+    }
+    left_out <- setdiff(present, custom_order)
+    if (length(left_out)) {
+        stop(arg, " is missing ", what, ": ",
+            paste(left_out, collapse = ", "), call. = FALSE)
+    }
 }
