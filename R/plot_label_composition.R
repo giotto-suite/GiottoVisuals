@@ -106,8 +106,8 @@ plotLabelComposition <- function(gobject = NULL,
             "`proportions`", call. = FALSE)
     }
     if (identical(value, "count") && !sources[["labels"]]) {
-        stop("value = \"count\" needs `labels`: an enrichment or a table of ",
-            "proportions carries no cell counts", call. = FALSE)
+        stop("value = \"count\" needs `labels`: counts are drawn only when ",
+            "the cells are counted here", call. = FALSE)
     }
     if (is.null(gobject) && !sources[["proportions"]]) {
         stop("`gobject` is needed unless `proportions` is given",
@@ -173,9 +173,9 @@ plotLabelComposition <- function(gobject = NULL,
         m <- m / rowSums(m)
     }
 
-    .lp_check_order(custom_group_order, rownames(m),
+    .lc_check_order(custom_group_order, rownames(m),
         "custom_group_order", "groups")
-    .lp_check_order(custom_label_order, colnames(m),
+    .lc_check_order(custom_label_order, colnames(m),
         "custom_label_order", "labels")
 
     hc <- NULL
@@ -296,7 +296,7 @@ plotLabelComposition <- function(gobject = NULL,
         save_param = save_param, else_return = NULL)
 }
 
-.lp_check_order <- function(custom_order, present, arg, what) {
+.lc_check_order <- function(custom_order, present, arg, what) {
     if (is.null(custom_order)) return(invisible())
     unknown <- setdiff(custom_order, present)
     if (length(unknown)) {

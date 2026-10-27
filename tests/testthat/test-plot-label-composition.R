@@ -1,6 +1,6 @@
 # plotLabelComposition(): ground truth is the counts the fixture is built from.
 
-.lp_gobject <- function(n_cells = 120L, seed = 3L) {
+.lc_gobject <- function(n_cells = 120L, seed = 3L) {
     set.seed(seed)
     m <- Matrix::rsparsematrix(10L, n_cells, density = 0.5,
         rand.x = function(n) as.double(rpois(n, 4L) + 1L))
@@ -19,88 +19,88 @@
             lab = lab))
 }
 
-.lp <- function(...) {
+.lc <- function(...) {
     plotLabelComposition(..., show_dendrogram = FALSE,
         show_plot = FALSE, return_plot = TRUE, save_plot = FALSE)
 }
 
-.lp_value <- function(p, g, l) {
+.lc_value <- function(p, g, l) {
     p$data$value[p$data$group == g & p$data$label == l]
 }
 
 test_that("labels give the share of each group's cells", {
-    g <- .lp_gobject()
-    p <- .lp(g, groups = "grp", labels = "lab")
+    g <- .lc_gobject()
+    p <- .lc(g, groups = "grp", labels = "lab")
     expect_s3_class(p, "ggplot")
-    expect_equal(.lp_value(p, "a", "x"), 0.75)
-    expect_equal(.lp_value(p, "b", "y"), 0.75)
-    expect_equal(.lp_value(p, "c", "x"), 0.5)
+    expect_equal(.lc_value(p, "a", "x"), 0.75)
+    expect_equal(.lc_value(p, "b", "y"), 0.75)
+    expect_equal(.lc_value(p, "c", "x"), 0.5)
     sums <- tapply(p$data$value, p$data$group, sum)
     expect_equal(as.vector(sums), rep(1, 3))
 })
 
 test_that("value = 'count' gives cells", {
-    g <- .lp_gobject()
-    p <- .lp(g, groups = "grp", labels = "lab", value = "count")
-    expect_equal(.lp_value(p, "a", "x"), 30)
+    g <- .lc_gobject()
+    p <- .lc(g, groups = "grp", labels = "lab", value = "count")
+    expect_equal(.lc_value(p, "a", "x"), 30)
     expect_equal(as.vector(tapply(p$data$value, p$data$group, sum)),
         rep(40, 3))
 })
 
 test_that("a precomputed table draws the same bars", {
-    g <- .lp_gobject()
+    g <- .lc_gobject()
     tab <- GiottoClass::calculateLabelProportions(g, labels = "lab",
         group_method = "table", groups = "grp", output = "data.table",
         verbose = FALSE)
-    p1 <- .lp(g, groups = "grp", labels = "lab")
-    p2 <- .lp(g, proportions = tab)
+    p1 <- .lc(g, groups = "grp", labels = "lab")
+    p2 <- .lc(g, proportions = tab)
     expect_equal(p2$data[order(group, label), value],
         p1$data[order(group, label), value])
     expect_identical(p2$labels$y, "grp")
 })
 
 test_that("an enrichment is averaged within each group", {
-    g <- .lp_gobject()
+    g <- .lc_gobject()
     g <- GiottoClass::createSpatialNetwork(g, method = "kNN", k = 5L,
         name = "knn", verbose = FALSE)
     g <- GiottoClass::calculateLabelProportions(g, labels = "lab",
         group_method = "spatialnetwork", spatial_network_name = "knn",
         name = "nb", output = "gobject", verbose = FALSE)
-    p <- .lp(g, groups = "grp", spat_enr_name = "nb")
+    p <- .lc(g, groups = "grp", spat_enr_name = "nb")
     enr <- GiottoClass::getSpatialEnrichment(g, name = "nb",
         output = "data.table")
     meta <- GiottoClass::pDataDT(g)
     a_ids <- meta$cell_ID[meta$grp == "a"]
-    expect_equal(.lp_value(p, "a", "x"),
+    expect_equal(.lc_value(p, "a", "x"),
         mean(enr$x[enr$cell_ID %in% a_ids]))
     expect_identical(p$labels$x, "mean neighborhood composition")
 })
 
 test_that("groups follow a custom order, or sort without clustering", {
-    g <- .lp_gobject()
-    p <- .lp(g, groups = "grp", labels = "lab",
+    g <- .lc_gobject()
+    p <- .lc(g, groups = "grp", labels = "lab",
         custom_group_order = c("c", "b", "a"))
     expect_identical(levels(p$data$group), c("c", "b", "a"))
-    p2 <- .lp(g, groups = "grp", labels = "lab", cluster_groups = FALSE)
+    p2 <- .lc(g, groups = "grp", labels = "lab", cluster_groups = FALSE)
     expect_identical(levels(p2$data$group), c("a", "b", "c"))
 })
 
 test_that("a view counts only the cells it keeps", {
-    g <- .lp_gobject()
+    g <- .lc_gobject()
     md <- GiottoClass::pDataDT(g)
     gv <- subset(g, lab == "x" | grp == "c", view = "v")
     kept <- md[lab == "x" | grp == "c"]$cell_ID
-    got <- .lp(gv, groups = "grp", labels = "lab", view = "v")
-    ref <- .lp(GiottoClass::subsetGiotto(g, cell_ids = kept),
+    got <- .lc(gv, groups = "grp", labels = "lab", view = "v")
+    ref <- .lc(GiottoClass::subsetGiotto(g, cell_ids = kept),
         groups = "grp", labels = "lab")
     expect_equal(got$data[order(group, label), value],
         ref$data[order(group, label), value])
-    expect_equal(.lp_value(got, "a", "x"), 1)
+    expect_equal(.lc_value(got, "a", "x"), 1)
 })
 
 test_that("the dendrogram is drawn in the same plot, which takes layers", {
     skip_if_not_installed("ggdendro")
-    g <- .lp_gobject()
+    g <- .lc_gobject()
     p <- plotLabelComposition(g, groups = "grp", labels = "lab",
         show_plot = FALSE, return_plot = TRUE, save_plot = FALSE)
     expect_s3_class(p, "ggplot")
@@ -113,51 +113,51 @@ test_that("the dendrogram is drawn in the same plot, which takes layers", {
 })
 
 test_that("value_text_size sets the printed values", {
-    g <- .lp_gobject()
-    p <- .lp(g, groups = "grp", labels = "lab", value_text_size = 4)
+    g <- .lc_gobject()
+    p <- .lc(g, groups = "grp", labels = "lab", value_text_size = 4)
     expect_identical(p$layers[[2]]$aes_params$size, 4)
 })
 
 test_that("inputs are checked", {
-    g <- .lp_gobject()
-    expect_error(.lp(g, groups = "grp"), "exactly one")
-    expect_error(.lp(g, groups = "grp", labels = "lab",
+    g <- .lc_gobject()
+    expect_error(.lc(g, groups = "grp"), "exactly one")
+    expect_error(.lc(g, groups = "grp", labels = "lab",
         spat_enr_name = "nb"), "exactly one")
-    expect_error(.lp(g, groups = "nope", labels = "lab"),
+    expect_error(.lc(g, groups = "nope", labels = "lab"),
         "not in the cell metadata")
     tab <- GiottoClass::calculateLabelProportions(g, labels = "lab",
         group_method = "table", groups = "grp", output = "data.table",
         verbose = FALSE)
-    expect_error(.lp(g, proportions = tab, value = "count"), "needs `labels`")
+    expect_error(.lc(g, proportions = tab, value = "count"), "needs `labels`")
 })
 
 test_that("a custom order must name every group or label, and nothing else", {
-    g <- .lp_gobject()
-    expect_error(.lp(g, groups = "grp", labels = "lab",
+    g <- .lc_gobject()
+    expect_error(.lc(g, groups = "grp", labels = "lab",
         custom_group_order = c("a", "b", "c", "z")),
         "custom_group_order names groups not in the data: z")
-    expect_error(.lp(g, groups = "grp", labels = "lab",
+    expect_error(.lc(g, groups = "grp", labels = "lab",
         custom_group_order = c("a", "b")),
         "custom_group_order is missing groups: c")
-    expect_error(.lp(g, groups = "grp", labels = "lab",
+    expect_error(.lc(g, groups = "grp", labels = "lab",
         custom_label_order = c("x", "z")),
         "custom_label_order names labels not in the data: z")
-    expect_error(.lp(g, groups = "grp", labels = "lab",
+    expect_error(.lc(g, groups = "grp", labels = "lab",
         custom_label_order = "x"),
         "custom_label_order is missing labels: y")
-    p <- .lp(g, groups = "grp", labels = "lab", custom_label_order = c("y", "x"))
+    p <- .lc(g, groups = "grp", labels = "lab", custom_label_order = c("y", "x"))
     expect_identical(levels(p$data$label), c("y", "x"))
 })
 
 test_that("a precomputed table needs no gobject; the other inputs do", {
-    g <- .lp_gobject()
+    g <- .lc_gobject()
     tab <- GiottoClass::calculateLabelProportions(g, labels = "lab",
         group_method = "table", groups = "grp", output = "data.table",
         verbose = FALSE)
-    p <- .lp(proportions = tab)
+    p <- .lc(proportions = tab)
     expect_s3_class(p, "ggplot")
-    expect_equal(.lp_value(p, "a", "x"), 0.75)
-    expect_error(.lp(groups = "grp", labels = "lab"),
+    expect_equal(.lc_value(p, "a", "x"), 0.75)
+    expect_error(.lc(groups = "grp", labels = "lab"),
         "`gobject` is needed unless `proportions` is given")
     expect_warning(plotLabelComposition(proportions = tab,
         show_dendrogram = FALSE, show_plot = FALSE, return_plot = TRUE,
