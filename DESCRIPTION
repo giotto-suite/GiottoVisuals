@@ -91,6 +91,7 @@ Collate:
     'plot_cluster_tree.R'
     'plot_dotplot.R'
     'plot_heatmap.R'
+    'plot_label_composition.R'
     'plot_ridge.R'
     'plot_sankey.R'
     'plot_scatter.R'
