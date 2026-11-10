@@ -8,7 +8,7 @@ plotStatDelaunayNetwork(
   gobject,
   feat_type = NULL,
   spat_unit = NULL,
-  method = c("deldir", "delaunayn_geometry", "RTriangle"),
+  method = c("delaunayn_geometry", "deldir", "RTriangle"),
   dimensions = "all",
   maximum_distance = "auto",
   minimum_k = 0,
@@ -31,7 +31,8 @@ plotStatDelaunayNetwork(
 
 \item{spat_unit}{spatial unit (e.g. "cell")}
 
-\item{method}{package to use to create a Delaunay network}
+\item{method}{package to use to create a Delaunay network. See
+\code{GiottoClass::createSpatialDelaunayNetwork()}.}
 
 \item{dimensions}{which spatial dimensions to use (maximum 2 dimensions)}
 
