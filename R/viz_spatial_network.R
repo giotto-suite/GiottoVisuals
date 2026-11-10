@@ -308,7 +308,8 @@ spatNetwDistributions <- function(gobject,
 #' @description Plots network statistics for a Delaunay network..
 #' @inheritParams data_access_params
 #' @inheritParams plot_output_params
-#' @param method package to use to create a Delaunay network
+#' @param method package to use to create a Delaunay network. See
+#' `GiottoClass::createSpatialDelaunayNetwork()`.
 #' @param dimensions which spatial dimensions to use (maximum 2 dimensions)
 #' @param maximum_distance distance cuttof for Delaunay neighbors to consider
 #' @param minimum_k minimum neigbhours if maximum_distance != NULL
@@ -327,7 +328,7 @@ spatNetwDistributions <- function(gobject,
 plotStatDelaunayNetwork <- function(gobject,
     feat_type = NULL,
     spat_unit = NULL,
-    method = c("deldir", "delaunayn_geometry", "RTriangle"),
+    method = c("delaunayn_geometry", "deldir", "RTriangle"),
     dimensions = "all",
     maximum_distance = "auto", # all
     minimum_k = 0, # all
