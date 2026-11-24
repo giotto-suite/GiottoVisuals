@@ -1,5 +1,8 @@
 # GiottoVisuals 0.2.16 (in development)
 
+## breaking changes
+- `FSV_show()` is removed. It plotted `spatialDE()` results only, and `spatialDE()` is removed from Giotto.
+
 ## enhancements
 - `plotLabelComposition()` draws one stacked bar per group showing how it is composed of labels, such as the cell types in each spatial niche or cluster. The proportions come from `GiottoClass::calculateLabelProportions()` (`labels`), from a stored composition enrichment averaged per group (`spat_enr_name`, e.g. a neighborhood composition from `calculateLabelProportions(group_method = "spatialnetwork")`), or from a precomputed table (`proportions`). Bars are ordered by a hierarchical clustering of their composition (1 - correlation, ward.D, as in `Giotto::calculateClusterTree()`), with the dendrogram drawn to their right in the same ggplot, so `labs()`, `theme()` and other layers apply to the whole figure. Proportions or cell counts.
 - `plot()` on a `giottoTree` from `Giotto::calculateClusterTree()` gains `what = c("tree", "heatmap")`. `"tree"` is the plain `hclust` plot, as before; `"heatmap"` draws the correlation matrix the tree was built from, in leaf order with its branches above it, so the colours and branches always agree. It is a ggplot (branches from ggdendro, no ComplexHeatmap), on the sequential palette from `giotto.color_cs_pal` (viridis by default) over the observed range, with the diagonal left blank.
@@ -37,7 +40,6 @@
 - `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now attached by `GiottoClass::annotateSpatialNetwork()` at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.
 
 ## changes
-- `FSV_show()` is removed, together with `spatialDE()` in Giotto.
 - `showClusterDendrogram()` is deprecated. Build the tree with
   `Giotto::calculateClusterTree()` and plot it with `plot()` or
   `ggdendro::ggdendrogram()`. That tree is the one the splits, node markers
