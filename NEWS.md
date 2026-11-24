@@ -1,5 +1,8 @@
 # GiottoVisuals 0.2.16 (in development)
 
+## breaking changes
+- `FSV_show()` is removed. It plotted `spatialDE()` results only, and `spatialDE()` is removed from Giotto.
+
 ## enhancements
 - `ridgePlot()` gains `group_as` and `group_order`. One feature with `group_by` is now drawn as one plot with a ridge per group on a shared axis (`group_as = "auto"`), instead of one panel per group with separate axes; several features keep one panel per group. `group_order = "mean"` or `"median"` orders the groups by the feature.
 - `plotLabelComposition()` draws one stacked bar per group showing how it is composed of labels, such as the cell types in each spatial niche or cluster. The proportions come from `GiottoClass::calculateLabelProportions()` (`labels`), from a stored composition enrichment averaged per group (`spat_enr_name`, e.g. a neighborhood composition from `calculateLabelProportions(group_method = "spatialnetwork")`), or from a precomputed table (`proportions`). Bars are ordered by a hierarchical clustering of their composition (1 - correlation, ward.D, as in `Giotto::calculateClusterTree()`), with the dendrogram drawn to their right in the same ggplot, so `labs()`, `theme()` and other layers apply to the whole figure. Proportions or cell counts.
