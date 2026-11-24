@@ -255,7 +255,7 @@ setMethod(
 }
 
 .sample_gaffimage <- function(x, size) {
-    res <- x@funs$realize_magick(size = size)
+    res <- GiottoClass::doDeferred(x, size = size)
     return(res)
 }
 
