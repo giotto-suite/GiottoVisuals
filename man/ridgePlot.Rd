@@ -10,6 +10,8 @@ ridgePlot(
   ...,
   group_by = NULL,
   group_by_subset = NULL,
+  group_as = c("auto", "panel", "ridge"),
+  group_order = c("data", "mean", "median"),
   spat_unit = NULL,
   feat_type = NULL,
   stat = "density_ridges",
@@ -46,6 +48,15 @@ ridgePlot(
 annotation column}
 
 \item{group_by_subset}{character. subset the group_by factor column}
+
+\item{group_as}{character. How \code{group_by} groups are drawn: \code{"panel"},
+one plot per group with the features as ridges; \code{"ridge"}, one plot with
+a ridge per group on a shared axis (one feature only); \code{"auto"} (default),
+\code{"ridge"} for one feature and \code{"panel"} for several.}
+
+\item{group_order}{character. Order of the groups: \code{"data"} (default, as
+they appear), or by the \code{"mean"} or \code{"median"} of the feature in each
+group (ascending).}
 
 \item{spat_unit}{spatial unit (e.g. "cell")}
 
@@ -136,5 +147,13 @@ ridgePlot(g,
     scale_axis = "identity",
     group_by = "leiden_clus",
     group_by_subset = c(1:4)
+)
+
+# one feature across groups: a ridge per cluster, ordered by mean
+ridgePlot(g,
+    feats = "nr_feats",
+    scale_axis = "identity",
+    group_by = "leiden_clus",
+    group_order = "mean"
 )
 }

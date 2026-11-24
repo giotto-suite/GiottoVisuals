@@ -27,6 +27,13 @@
 #' removed with a warning. If `TRUE`, missing values are silently removed.
 #' @param theme_param list of additional params passed to `ggplot2::theme()`
 #' @param title character. Title for plot
+#' @param group_as character. How `group_by` groups are drawn: `"panel"`,
+#' one plot per group with the features as ridges; `"ridge"`, one plot with
+#' a ridge per group on a shared axis (one feature only); `"auto"` (default),
+#' `"ridge"` for one feature and `"panel"` for several.
+#' @param group_order character. Order of the groups: `"data"` (default, as
+#' they appear), or by the `"mean"` or `"median"` of the feature in each
+#' group (ascending).
 #' @param verbose be verbose
 #' @inheritParams gmulti_params
 #' @returns ggplot
@@ -52,10 +59,20 @@
 #'     group_by = "leiden_clus",
 #'     group_by_subset = c(1:4)
 #' )
+#'
+#' # one feature across groups: a ridge per cluster, ordered by mean
+#' ridgePlot(g,
+#'     feats = "nr_feats",
+#'     scale_axis = "identity",
+#'     group_by = "leiden_clus",
+#'     group_order = "mean"
+#' )
 #' @export
 ridgePlot <- function(gobject, feats, ...,
     group_by = NULL,
     group_by_subset = NULL,
+    group_as = c("auto", "panel", "ridge"),
+    group_order = c("data", "mean", "median"),
     spat_unit = NULL,
     feat_type = NULL,
     stat = "density_ridges",
@@ -86,6 +103,8 @@ ridgePlot <- function(gobject, feats, ...,
     value <- NULL # NSE vars
     package_check("ggridges")
     checkmate::assert_character(feats)
+    group_as <- match.arg(group_as)
+    group_order <- match.arg(group_order)
     checkmate::assert_character(scale_axis)
     checkmate::assert_numeric(axis_offset, null.ok = TRUE)
     if (is.null(axis_offset) && scale_axis %in% c("log", "log2", "log10")) {
@@ -110,6 +129,7 @@ ridgePlot <- function(gobject, feats, ...,
     )
 
     # split up data into lists of data if `group_by` was given
+    y_label <- "Feature"
     if (is.null(group_by)) {
         data_list <- list(
             .ridgeplot_data_prep(data, axis_offset = axis_offset)
@@ -129,16 +149,38 @@ ridgePlot <- function(gobject, feats, ...,
             }
             unique_groups <- unique_groups[unique_groups %in% group_by_subset]
         }
+        feat_cols <- setdiff(colnames(data), c("cell_ID", group_by))
+        unique_groups <- .ridgeplot_group_order(data, group_by, feat_cols,
+            unique_groups, group_order)
+        if (identical(group_as, "auto")) {
+            group_as <- if (length(feat_cols) == 1L) "ridge" else "panel"
+        }
 
-        # subset data based on the group_by
-        data_list <- lapply(unique_groups, function(ugroup) {
-            data <- data[get(group_by) == ugroup]
-            data <- data[, -group_by, with = FALSE]
-            .ridgeplot_data_prep(data, axis_offset = axis_offset)
-        })
+        if (identical(group_as, "ridge")) {
+            if (length(feat_cols) != 1L) {
+                stop("[ridgePlot] group_as = \"ridge\" needs one feature",
+                    call. = FALSE)
+            }
+            # one plot: the groups are the ridges
+            data <- data[get(group_by) %in% unique_groups]
+            grp <- factor(data[[group_by]], levels = unique_groups)
+            data <- .ridgeplot_data_prep(data[, c("cell_ID", feat_cols),
+                with = FALSE], axis_offset = axis_offset)
+            data[, "feat" := grp]
+            data_list <- list(data)
+            title <- if (nzchar(title)) title else feat_cols
+            y_label <- group_by
+        } else {
+            # subset data based on the group_by
+            data_list <- lapply(unique_groups, function(ugroup) {
+                data <- data[get(group_by) == ugroup]
+                data <- data[, -group_by, with = FALSE]
+                .ridgeplot_data_prep(data, axis_offset = axis_offset)
+            })
 
-        # update title
-        title <- paste(title, unique_groups)
+            # update title
+            title <- paste(title, unique_groups)
+        }
     }
 
     common_args <- get_args_list(keep = c(
@@ -150,7 +192,8 @@ ridgePlot <- function(gobject, feats, ...,
         function(data_i, title_i) {
             specific_args <- list(
                 data = data_i,
-                title = title_i
+                title = title_i,
+                y_label = y_label
             )
             do.call(.ridgeplot_single, args = c(specific_args, common_args))
         },
@@ -184,6 +227,17 @@ ridgePlot <- function(gobject, feats, ...,
     ))
 }
 
+# groups in the requested order: as they appear, or ascending by the mean or
+# median of the (first) feature in each group
+.ridgeplot_group_order <- function(data, group_by, feat_cols, groups, order) {
+    if (identical(order, "data")) return(groups)
+    f <- switch(order, mean = mean, median = stats::median)
+    v <- vapply(groups, function(gr) {
+        f(data[get(group_by) == gr][[feat_cols[1L]]], na.rm = TRUE)
+    }, numeric(1L))
+    groups[order(v)]
+}
+
 # transform table to long format and add any offset. drops cell_ID col
 .ridgeplot_data_prep <- function(data, axis_offset = NULL) {
     value <- NULL # NSE vars
@@ -210,6 +264,7 @@ ridgePlot <- function(gobject, feats, ...,
     remove_na = NULL,
     background_color = "white",
     title = "",
+    y_label = "Feature",
     show_legend = FALSE,
     theme_param = list()
 ) {
@@ -233,7 +288,7 @@ ridgePlot <- function(gobject, feats, ...,
             scale = ridge_scale,
             show.legend = show_legend
         ) +
-        ggplot2::labs(x = "Value", y = "Feature", title = title) +
+        ggplot2::labs(x = "Value", y = y_label, title = title) +
         ggplot2::scale_x_continuous(transform = scale_axis) +
         ggridges::theme_ridges() +
         do.call(ggplot2::theme, theme_param)
