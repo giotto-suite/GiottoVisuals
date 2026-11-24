@@ -3,7 +3,6 @@
 S3method(plot,giottoTree)
 S3method(print,giotto_plot_save_param)
 export("sankeyLabel<-")
-export(FSV_show)
 export(addGiottoImageToSpatPlot)
 export(aes_string2)
 export(all_plots_save_function)

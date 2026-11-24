@@ -54,7 +54,6 @@ layers of information
 Other:  
 - `color_palettes.R` - color palettes and factory functions
 
-- `vis_spatialDE.R` -
 
 Package:  
 - `package_imports.R` - all imports  

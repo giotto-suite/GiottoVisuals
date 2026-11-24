@@ -96,7 +96,6 @@ Collate:
     'plot_sankey.R'
     'plot_scatter.R'
     'plot_violin.R'
-    'spatialDE_visuals.R'
     'suite_reexports.R'
     'vis_spatial_gg.R'
     'vis_spatial_in_situ.R'
