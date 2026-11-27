@@ -806,27 +806,15 @@ plotMetaDataHeatmap <- function(
 
 
             # print, return and save parameters
-            show_plot <- ifelse(is.na(show_plot),
-                readGiottoInstructions(
-                    gobject,
-                    param = "show_plot"
-                ),
-                show_plot
-            )
-            save_plot <- ifelse(is.na(save_plot),
-                readGiottoInstructions(
-                    gobject,
-                    param = "save_plot"
-                ),
-                save_plot
-            )
-            return_plot <- ifelse(is.na(return_plot),
-                readGiottoInstructions(
-                    gobject,
-                    param = "return_plot"
-                ),
-                return_plot
-            )
+            if (is.null(show_plot) || is.na(show_plot)) {
+                show_plot <- readGiottoInstructions(gobject, param = "show_plot")
+            }
+            if (is.null(save_plot) || is.na(save_plot)) {
+                save_plot <- readGiottoInstructions(gobject, param = "save_plot")
+            }
+            if (is.null(return_plot) || is.na(return_plot)) {
+                return_plot <- readGiottoInstructions(gobject, param = "return_plot")
+            }
 
 
             ## print plot

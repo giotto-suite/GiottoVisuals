@@ -37,6 +37,7 @@
   label shows its cluster ID instead of "NA".
 
 ## bug fixes
+- `plotMetaDataHeatmap()` with two metadata columns works with its default `show_plot`, `save_plot` and `return_plot` (`NULL`); it failed with "argument is of length zero".
 - `spatDeconvPlot()` selects the cell type columns of the spatial enrichment by name instead of position, so it no longer fails when `cell_ID` is not the first column (e.g. DWLS results) ([#149](https://github.com/giotto-suite/GiottoVisuals/issues/149))
 - `show_network = TRUE` draws again. A spatial network has been stored as an igraph since GiottoClass 0.6.0, so `getSpatialNetwork(output = "networkDT")` returns an edge list with no coordinates, while the drawing code still expected `sdimx_begin` / `sdimy_begin` / `sdimx_end` / `sdimy_end`. The endpoints are now attached by `GiottoClass::annotateSpatialNetwork()` at draw time. Affected `spatPlot2D()`, `spatFeatPlot2D()` and the plotly 2D/3D family. The failure was at render rather than at fetch, so a plot object built without error and only broke when printed or saved.
 
