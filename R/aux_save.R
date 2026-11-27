@@ -322,12 +322,12 @@ showSaveParameters <- function() {
     # show saved plot if requested
     if (isTRUE(show_saved_plot)) {
         if (save_format == "png") {
-            if (package_check("png", optional = TRUE)) {
+            if (package_check("png", on_missing = "message")) {
                 img <- png::readPNG(source = fullpath)
                 grid::grid.raster(img)
             }
         } else if (save_format == "tiff") {
-            if (package_check("tiff", optional = TRUE)) {
+            if (package_check("tiff", on_missing = "message")) {
                 img <- tiff::readTIFF(source = fullpath)
                 grid::grid.raster(img)
             }
@@ -412,13 +412,13 @@ showSaveParameters <- function() {
         if (isTRUE(show_saved_plot)) {
             switch(save_format,
                 "png" = {
-                    if (package_check("png", optional = TRUE)) {
+                    if (package_check("png", on_missing = "message")) {
                         img <- png::readPNG(source = fullpath)
                         grid::grid.raster(img)
                     }
                 },
                 "tiff" = {
-                    if (package_check("tiff", optional = TRUE)) {
+                    if (package_check("tiff", on_missing = "message")) {
                         img <- tiff::readTIFF(source = fullpath)
                         grid::grid.raster(img)
                     }
