@@ -67,7 +67,7 @@ Suggests:
     knitr,
     rmarkdown
 Remotes:
-    giotto-suite/GiottoUtils,
+    giotto-suite/GiottoUtils@dev,
     giotto-suite/GiottoClass@gsource
 Config/testthat/edition: 3
 Collate: 
