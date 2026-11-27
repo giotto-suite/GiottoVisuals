@@ -2826,8 +2826,8 @@ spatFeatPlot2D_single <- function(
                         x = sdimx,
                         y = sdimy,
                         group = -1L,
-                        fill = feat,
-                        alpha = feat
+                        fill = as.name(feat),
+                        alpha = as.name(feat)
                     ),
                     colour = vor_border_color,
                     max.radius = vor_max_radius,
@@ -2840,7 +2840,7 @@ spatFeatPlot2D_single <- function(
                         x = sdimx,
                         y = sdimy,
                         group = -1L,
-                        fill = feat
+                        fill = as.name(feat)
                     ),
                     colour = vor_border_color,
                     max.radius = vor_max_radius,
@@ -3412,8 +3412,8 @@ spatFeatPlot2D <- function(
                     aes_string2(
                         x = dim_names[1],
                         y = dim_names[2],
-                        fill = feat,
-                        alpha = feat
+                        fill = as.name(feat),
+                        alpha = as.name(feat)
                     ),
                     show.legend = show_legend,
                     shape = 21,
@@ -3427,7 +3427,7 @@ spatFeatPlot2D <- function(
                     aes_string2(
                         x = dim_names[1],
                         y = dim_names[2],
-                        fill = feat
+                        fill = as.name(feat)
                     ),
                     show.legend = show_legend,
                     shape = 21,
@@ -3459,8 +3459,8 @@ spatFeatPlot2D <- function(
                     aes_string2(
                         x = dim_names[1],
                         y = dim_names[2],
-                        color = feat,
-                        alpha = feat
+                        color = as.name(feat),
+                        alpha = as.name(feat)
                     ),
                     show.legend = show_legend,
                     shape = 19,
@@ -3472,7 +3472,7 @@ spatFeatPlot2D <- function(
                     aes_string2(
                         x = dim_names[1],
                         y = dim_names[2],
-                        color = feat
+                        color = as.name(feat)
                     ),
                     show.legend = show_legend,
                     shape = 19,
