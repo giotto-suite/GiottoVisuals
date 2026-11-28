@@ -343,6 +343,7 @@ plotStatDelaunayNetwork <- function(gobject,
     ...) {
     # data.table variables
     distance <- rank_int <- N <- NULL
+    method <- match.arg(method)
 
     delaunay_network_DT <- createSpatialDelaunayNetwork(
         gobject = gobject,
