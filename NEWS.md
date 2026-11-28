@@ -37,6 +37,7 @@
   label shows its cluster ID instead of "NA".
 
 ## bug fixes
+- `dimFeatPlot2D()`, `spatDimFeatPlot2D()` and `spatFeatPlot2D(point_shape = "no_border")` work with feature names that are not valid R names (e.g. `Nkx2-2`, `2010300C02Rik`); they were parsed as code.
 - `plotMetaDataHeatmap()` with two metadata columns works with its default `show_plot`, `save_plot` and `return_plot` (`NULL`); it failed with "argument is of length zero".
 - `plotStatDelaunayNetwork()` works again with its default `method`: it passed the unresolved choices on, which `GiottoClass::createSpatialDelaunayNetwork()` rejects ("'arg' must be of length 1").
 - `spatDeconvPlot()` selects the cell type columns of the spatial enrichment by name instead of position, so it no longer fails when `cell_ID` is not the first column (e.g. DWLS results) ([#149](https://github.com/giotto-suite/GiottoVisuals/issues/149))
